@@ -189,6 +189,18 @@
       "class": "content"
     },
     {
+      "id": "center_cover",
+      "type": "fill",
+      "class": "content",
+      "z": 2,
+      "x": 880,
+      "y": 40,
+      "w": 160,
+      "h": 600,
+      "color": "bg",
+      "_note": "covers the center gap so a non-M car's native gear/selector doesn't bleed through"
+    },
+    {
       "id": "spd_us0",
       "type": "text",
       "z": 5,
