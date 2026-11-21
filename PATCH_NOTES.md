@@ -214,3 +214,10 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   BMW drew such a box only while a theme covered its gear letter in the bottom strip. New test switch "Leave BMW's
   bottom strip uncovered (test)" (stripClear): no strip row and no strip covers, BMW's strip as it is, to see whether
   covering something of the M display's strip is what makes BMW draw them.
+
+## Cluster Themes 0.25.3 — the black-box check runs by itself
+- "Black-box check" (was "Cluster diagnostics"), once per switch-on, about 20 s: (1) cluster-render's slot report with
+  the theme up; (2) the theme taken off for 5 s, BMW's own screen, and the report again; lines that differ are starred
+  in Settings, so BMW's slots shown only while a theme is up stand out; (3) 8 s of one opaque blue sheet over all of
+  the theme, no see-through parts. Black boxes still on the blue are BMW's, drawn above the panel; gone, BMW's
+  cluster was showing through a see-through part of the theme. Then the theme comes back.

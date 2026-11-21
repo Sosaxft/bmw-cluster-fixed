@@ -1132,6 +1132,7 @@ class HudApp {
     /** The layout name to show now: per drive mode when that's on and known, else the plain setting. */
     _layoutName() {
         if (this.screen && this.screen.yielded) return 'off';
+        if (this._diagOff) return 'off';                // the black-box check's few seconds of BMW's own screen
         if (this.claimBy) return this._turnOverClaim() ? 'blinkers' : 'off';
         if (this.vstate.hold()) return 'off';           // the switch-off guard (_vehKeep keeps what is up at 8)
         return this._chosenName();
@@ -1347,16 +1348,44 @@ class HudApp {
     clusterDiagLines() {
         if (this.setting('clusterDiag') !== true) {
             if (this._diagT) { clearInterval(this._diagT); this._diagT = null; }
+            this._diagRun = null;
+            if (this._diagOff || this._diagSolid) { this._diagOff = false; this._diagSolid = false; this._rebuild(); }
             return [];
         }
         if (!this._diagT) {
-            this._diagT = setInterval(() => this._guard('diag', () => { if (this.client.ready) this.client.status(); this._status(); }), 3000);
-            if (this.client.ready) this.client.status();
+            // a check by itself, once per switch-on: cluster-render's slot report with the theme up, then with the theme
+            // taken off for a few seconds (BMW's own screen), then the theme back: what BMW shows differently while a
+            // theme is up is what draws the black boxes (BimmerCode's M display, Nov 21 2026)
+            const run = this._diagRun = { phase: 'with the theme up', on: null, off: null };
+            const ask = () => { if (this.client.ready) this.client.status(); };
+            const slots = () => String(this.crStatus || '').split('\n').map((l) => l.trim()).filter((l) => /slot|0x[0-9a-f]{3}\b/i.test(l) && !/^layer \d/.test(l));
+            const step = (ms, fn) => setTimeout(() => this._guard('diag', () => { if (this._diagRun === run) fn(); }), ms);
+            ask();
+            step(3000, () => {
+                run.on = slots();
+                run.phase = 'theme taken off for a moment';
+                this._diagOff = true; this._rebuild();
+                step(5000, ask);
+                step(8000, () => {
+                    run.off = slots();
+                    run.phase = 'solid blue test: look at the cluster now. Black boxes on the blue = BMW draws them on top';
+                    this._diagOff = false; this._diagSolid = true; this._rebuild(); this._status();
+                });
+                step(16000, () => {
+                    run.phase = 'done (switch off and on to check again)';
+                    this._diagSolid = false; this._rebuild(); this._status();
+                });
+            });
+            this._diagT = setInterval(() => this._guard('diag', () => { ask(); this._status(); }), 3000);
         }
-        const age = this.crStatusAt ? Math.round((Date.now() - this.crStatusAt) / 1000) + ' s ago' : 'not yet';
-        const lines = String(this.crStatus || '').split('\n').map((l) => l.trim())
-            .filter((l) => l && !/^layer \d/.test(l));
-        return ['cluster-render status (' + age + '), theme ' + (this.activeName || '--') + ':'].concat(lines.slice(0, 22));
+        const run = this._diagRun || {};
+        const out = ['Black-box check: ' + (run.phase || '--') + '. A line marked * differs between the two.'];
+        const mark = (l, other) => (other && other.indexOf(l) < 0 ? '* ' : '  ') + l;
+        out.push('With the theme up:');
+        (run.on || ['(reading)']).slice(0, 9).forEach((l) => out.push(mark(l, run.off)));
+        out.push("BMW's own screen (theme off):");
+        (run.off || ['(waiting)']).slice(0, 9).forEach((l) => out.push(mark(l, run.on)));
+        return out;
     }
 
     modeDiagLines(names) {
@@ -1978,6 +2007,9 @@ class HudApp {
             .map((w) => (w.stripRow ? Object.assign({}, w) : w));
         if (this.target === 'hud' && this.setting('showTurn') !== false && !/calibration/i.test(layout.name || '')
             && !shown.some((w) => ['grid', 'gridlabels', 'swatch', 'swatchimg'].indexOf(w.type) >= 0)) shown.push(Object.assign({}, TURN_WIDGET));
+        // the black-box check's solid phase: one opaque blue sheet over all of ours, no holes. A black box still seen then
+        // is BMW's, drawn above the panel; gone, it was BMW's cluster showing through a see-through part of ours
+        if (this._diagSolid && this.target === 'panel') shown.push({ id: 'diag_solid', type: 'fill', class: 'alert', z: 999, x: 0, y: 0, w: 1920, h: 720, color: [24, 70, 170, 255] });
         this.shown = shown;              // for a scale to find its rev bar (driver camera wings)
         this._setNeeds(shown);
         // plan the layers first (a sheet's size is only known once every member is placed), then make them
