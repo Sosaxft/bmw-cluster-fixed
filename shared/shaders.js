@@ -1914,4 +1914,163 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH };
+const HEXLC = `// The Live Cockpit Map theme in one cluster-render "effect" layer (GLSL ES 1.00), after BMW's own iDrive 7 Live Cockpit
+// screen with the map up: two brackets of the Sport theme's real-car geometry (speed left in blue, revs right in red),
+// each a bright outer line, a band shaded from its outer edge inwards and lit to the value, and an inner line, with their
+// top and bottom runs; the Waze map cut see-through to the hexagon's inside (and never past the map window u_hole); the
+// slanted fuel / oil bars in its lower corners stay up over the map; a road while no map shows. Same uniforms as
+// sdash and hexdash, so hud.js drives all three alike; u_strip.x is where the bottom runs end here. (0,0) top-left.
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_geo;       // outer line: y at the top, y at the bend, y at the bottom, x at the bend (left side)
+uniform vec3 u_k;         // x per y px above the bend, below it, bend roundness px
+uniform float u_w;        // band width
+uniform float u_inner;    // the inner line's distance from the outer line
+uniform vec2 u_scale;     // y of the scale's 0 and of its top mark
+uniform vec2 u_ticks;     // marks left (speed), right (rpm)
+uniform float u_speed;    // 0..1 along the scale
+uniform float u_rpm;      // 0..1
+uniform float u_redFrom;  // 0..1 (the redline)
+uniform float u_orange;   // 0..1, warning marks from here to the redline
+uniform float u_fuel;     // 0..1
+uniform float u_oil;      // 0..1
+uniform vec4 u_fuelSeg;   // full end x, y, empty end x, y
+uniform vec4 u_oilSeg;
+uniform vec4 u_hole;      // the map window x, y, w, h, already inset (w 0 = closed)
+uniform float u_holeR;    // how far inside the inner line the map starts, px
+uniform vec4 u_strip;     // x: the bottom runs end here (left; mirrored), y, z, w: unused
+uniform float u_topEnd;   // the top runs end here (left; mirrored)
+uniform vec4 u_road;      // the road in the hexagon: horizon y, px scale, dash phase 0..1, on
+
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 over(vec4 top, vec4 under) {
+    float a = top.a + under.a * (1.0 - top.a);
+    if (a <= 0.0) return vec4(0.0);
+    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+}
+float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
+float segH(vec2 p, vec2 a, vec2 b) { vec2 ba = b - a; return clamp(dot(p - a, ba) / dot(ba, ba), 0.0, 1.0); }
+
+float outerX(float y) {
+    float dy = y - u_geo.y;
+    float k = dy < 0.0 ? u_k.x : u_k.y;
+    return u_geo.w + k * (sqrt(dy * dy + u_k.z * u_k.z) - u_k.z);
+}
+float outerSlope(float y) {
+    float dy = y - u_geo.y;
+    float k = dy < 0.0 ? u_k.x : u_k.y;
+    return k * dy / sqrt(dy * dy + u_k.z * u_k.z);
+}
+float dIn(vec2 q) { return (q.x - outerX(q.y)) / sqrt(1.0 + outerSlope(q.y) * outerSlope(q.y)); }
+
+float hexIn(vec2 p, float ins) {
+    vec2 pm = vec2(u_size.x - p.x, p.y);
+    float a = min(dIn(p), dIn(pm)) - u_inner - ins;
+    float b = min(p.y - u_geo.x - 8.0 - ins, u_geo.z - 8.0 - ins - p.y);
+    return min(a, b);
+}
+
+// one bracket (q mirrored for the right one); side 0 speed (blue), 1 revs (red)
+vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float side, vec4 c) {
+    vec3 LINE = side < 0.5 ? vec3(0.16, 0.56, 1.0) : vec3(1.0, 0.13, 0.17);
+    vec3 BANDC = side < 0.5 ? vec3(0.07, 0.36, 0.9) : vec3(0.76, 0.05, 0.09);
+    vec3 LITC = side < 0.5 ? vec3(0.5, 0.82, 1.0) : vec3(1.0, 0.5, 0.42);
+    float d = dIn(q);
+    float yTopI = u_geo.x + 8.0, yBotI = u_geo.z - 8.0;
+    float t = (u_scale.x - q.y) / (u_scale.x - u_scale.y);
+    bool inY = q.y > u_geo.x + 5.0 && q.y < u_geo.z - 4.0;
+    // the band: shaded from its outer edge (bright) inwards (dark); lit brighter up to the value, white marker on top
+    float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - 5.0 - u_w);
+    if (inB > 0.0) {
+        float f = clamp((d - 5.0) / u_w, 0.0, 1.0);
+        vec3 col = BANDC * mix(1.0, 0.5, f);
+        if (t <= val) col = mix(LITC, BANDC * 1.4, f * 0.8);
+        c = over(vec4(col, 0.95 * inB), c);
+        float yv = u_scale.x - val * (u_scale.x - u_scale.y);
+        if (val > 0.002) c = over(vec4(1.0, 1.0, 1.0, inB * cov(abs(q.y - yv) - 2.0)), c);
+        float kk = floor(t * ticks + 0.5);
+        float yk = u_scale.x - kk / ticks * (u_scale.x - u_scale.y);
+        if (kk >= 0.0 && kk <= ticks && d > 6.0 && d < 17.0) c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(abs(q.y - yk) - 1.2)), c);
+        if (redFrom < 1.5 && d > 7.0 && d < 12.0) {
+            if (t >= redFrom && t <= 1.02) c = over(vec4(1.0, 1.0, 1.0, 1.0), c);
+            else if (t >= orange && t < redFrom && mod(q.y, 16.0) < 7.0) c = over(vec4(1.0, 0.85, 0.1, 1.0), c);
+        }
+    }
+    // the outer line (bold) with its top run (to u_topEnd) and bottom run (to u_strip.x)
+    float o = inY || abs(q.y - u_geo.x) < 6.0 || abs(q.y - u_geo.z) < 6.0 ? cov(abs(d - 1.0) - 3.2) : 0.0;
+    vec2 tl = vec2(outerX(u_geo.x), u_geo.x), bl = vec2(outerX(u_geo.z), u_geo.z);
+    o = max(o, cov(segD(q, tl, vec2(u_topEnd, u_geo.x)) - 3.6));
+    o = max(o, cov(segD(q, bl, vec2(u_strip.x, u_geo.z)) - 3.6));
+    c = over(vec4(LINE, 0.35 * exp(-abs(d) / 7.0) * (inY ? 1.0 : 0.0) * step(d, 0.0)), c);
+    c = over(vec4(LINE, o), c);
+    // the inner line, with its own top and bottom runs
+    float il = (q.y > yTopI && q.y < yBotI) ? cov(abs(d - u_inner) - 1.8) : 0.0;
+    float xt = outerX(yTopI) + u_inner * sqrt(1.0 + outerSlope(yTopI) * outerSlope(yTopI));
+    float xb = outerX(yBotI) + u_inner * sqrt(1.0 + outerSlope(yBotI) * outerSlope(yBotI));
+    il = max(il, cov(segD(q, vec2(xt, yTopI), vec2(u_topEnd - 14.0, yTopI)) - 1.8));
+    il = max(il, cov(segD(q, vec2(xb, yBotI), vec2(u_strip.x - 14.0, yBotI)) - 1.8));
+    c = over(vec4(LINE, 0.95 * il), c);
+    return c;
+}
+
+// a two-tone slanted bar from the empty end b to the full end a, with a thin rail beside it
+vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
+    vec2 a = s.xy, b = s.zw;
+    float h = 1.0 - segH(p, a, b);
+    vec2 dir = normalize(a - b), nrm = vec2(-dir.y, dir.x);
+    float side = dot(p - b, nrm);
+    float along = segD(p, a, b);
+    if (along > 26.0) return c;
+    float body = cov(abs(side) - 4.0) * cov(segD(p, a, b) - 4.5);
+    vec3 col = vec3(1.0);
+    if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
+    if (zones > 0.5 && h < 0.1) col = vec3(0.3, 0.6, 1.0);
+    c = over(vec4(0.32, 0.34, 0.38, 0.85 * body), c);
+    c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
+    // marks across the bar at its ends and halfway
+    float mk = min(min(abs(segH(p, a, b) - 0.0), abs(segH(p, a, b) - 0.5)), abs(segH(p, a, b) - 1.0)) * length(a - b);
+    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 9.0)), c);
+    return c;
+}
+
+void main() {
+    vec2 p = v_uv * u_size;
+    vec2 pm = vec2(u_size.x - p.x, p.y);
+    vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
+
+    c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, 0.0, c);
+    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, 1.0, c);
+    float hx = hexIn(p, u_holeR);
+    if (u_hole.z > 0.0) {
+        // the map: see-through inside the hexagon AND inside the map window (outside it is BMW's own cluster)
+        vec2 hs = u_hole.zw * 0.5;
+        vec2 qq = abs(p - (u_hole.xy + hs)) - hs;
+        float inRect = -max(qq.x, qq.y);
+        // past the map window but inside the hexagon: a dark night-map blue, so the map reads as filling the hexagon
+        c = over(vec4(0.05, 0.085, 0.15, clamp(hx + 0.5, 0.0, 1.0) * clamp(0.5 - inRect, 0.0, 1.0)), c);
+        float k = min(hx, inRect);
+        c.a *= clamp(0.5 - k, 0.0, 1.0);
+    } else if (u_road.w > 0.5 && p.y > u_road.x + 1.0 && hx > -1.0) {
+        float dy = p.y - u_road.x;
+        float xw = (p.x - u_size.x * 0.5) * u_road.y / dy;
+        float px = dy / u_road.y;
+        float fade = smoothstep(0.0, 70.0, dy) * clamp(hx + 0.5, 0.0, 1.0);
+        float hw = 1.2 + dy * 0.012;
+        float edge = cov(abs(abs(xw) - 1.5) * px - hw);
+        float dash = step(fract(u_road.y * 120.0 / dy + u_road.z), 0.5);
+        float lane = cov(abs(abs(xw) - 0.5) * px - hw) * dash;
+        c = over(vec4(0.85, 0.9, 1.0, 0.6 * fade * max(edge, lane)), c);
+    }
+    // the fuel and oil bars in the hexagon's lower corners, over the map too (as BMW's own screen)
+    c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
+    c = bar(p, u_oilSeg, u_oil, 1.0, c);
+    gl_FragColor = c;
+}
+`;
+
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC };

@@ -67,7 +67,7 @@ function obstacles(target, shown, camera) {
             }
             return;
         }
-        if ((w.type === 'sdash' || w.type === 'hexdash') && Array.isArray(w.geo)) {
+        if ((w.type === 'sdash' || w.type === 'hexdash' || w.type === 'hexlc') && Array.isArray(w.geo)) {
             // the Sport dash: its top lines run at geo[0]; nothing under them (the dash's own space)
             add(w.x, w.y + w.geo[0] - 4, w.x + w.w, w.y + w.h);
         }

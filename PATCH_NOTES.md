@@ -46,3 +46,12 @@ After BMW's Live Cockpit Sport view with the map in the middle. Pick **Hex Map**
 - Hex Map: clean Outfit lettering (new h_* fonts, nothing else's fonts changed), black backdrop with the orange glow
   only along the inner edges and on the lit part (the car brightens dark reds, so no dark-red slabs), thinner white
   lines, a road of lines only, and a wider hexagon filling BMW's whole map window with speed / gear at the edges.
+
+## 0.21.0 — new theme: Live Cockpit Map
+A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Cockpit Map** in Cluster Themes.
+- Blue speed bracket left, red rev bracket right (bold outer line, band shaded inwards and lit to the value, inner
+  line, top and bottom runs), the Waze map filling the hexagon (past the map window, a dark night-map blue so it reads
+  as one map), the speed and gear big inside it, the slanted fuel and oil gauges in its lower corners over the map.
+- The brackets and scale numbers are the Sport theme's, traced off a real car; the rest measured on a straightened
+  photo of BMW's screen. Barlow lettering (closest open font to BMW's), new l_* fonts.
+- New: shaders.js HEXLC (same inputs as Sport / Hex Map), `lcmap` colours, layout written by tools/gen_lcmap.py.

@@ -63,6 +63,17 @@ const THEMES = {
         ink: [12, 12, 14, 255], accent: [60, 215, 255, 255], well: [0, 0, 0, 255], faint: [96, 110, 135, 255],
         sblue: [120, 170, 245, 255], spink: [236, 140, 140, 255], sred: [235, 60, 70, 255],
     },
+    // Live Cockpit Map (layout lcmap.json, tools/gen_lcmap.py): BMW's own iDrive 7 screen with the map up, blue / red.
+    lcmap: {
+        name: 'Live Cockpit Map',
+        fg: [255, 255, 255, 255], dim: [178, 186, 198, 255], track: [70, 76, 88, 255], arc: [42, 143, 255, 255],
+        glow: 0, stripe: false,
+        bar: { low: [42, 143, 255], mid: [42, 143, 255], high: [255, 40, 48], midAt: 'shift' },
+        rev: { from: [255, 34, 44], to: [255, 34, 44] },
+        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [255, 255, 255, 255], head: [226, 228, 232, 255],
+        ink: [12, 12, 14, 255], accent: [42, 143, 255, 255], well: [0, 0, 0, 255], faint: [104, 110, 122, 255],
+        lscale: [222, 228, 236, 255], lblue: [92, 170, 255, 255], lred: [255, 84, 92, 255],
+    },
     // Hex Map (layout hexmap.json, tools/gen_hexmap.py): black, a white hexagon frame glowing red to orange, the map inside.
     hexdash: {
         name: 'Hex Map',

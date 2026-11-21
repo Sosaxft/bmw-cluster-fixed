@@ -107,6 +107,11 @@ CLUSTER_FONTS = [
     ('h_val', 'Outfit[wght].ttf', 30, DIGITS + ':+-.', 0, 'Regular'),
     ('h_unit', 'Outfit[wght].ttf', 22, LOWER + UPPER + DIGITS + '°/-. ', 0, 'Regular'),
     ('h_label', 'Outfit[wght].ttf', 24, UPPER + DIGITS + ' .', 0, 'Medium'),
+    # Live Cockpit Map: Barlow (SIL OFL), its rounded-square digits closest to BMW's own
+    ('l_big', 'Barlow-Medium.ttf', 86, 'PRNDSM-' + DIGITS, 2),
+    ('l_scale', 'BarlowSemiCondensed-SemiBold.ttf', 28, DIGITS),
+    ('l_val', 'BarlowSemiCondensed-Medium.ttf', 30, DIGITS + ':+-.'),
+    ('l_unit', 'BarlowSemiCondensed-Medium.ttf', 23, LOWER + UPPER + DIGITS + '°/-. '),
     # Ribbon: Outfit (SIL OFL), thin and calm: the huge speed, the side readouts, small spaced labels
     ('b_speed', 'Outfit[wght].ttf', 250, DIGITS + '-', 0, 'ExtraLight'),
     ('b_val', 'Outfit[wght].ttf', 44, DIGITS + '.:-+°% ' + LOWER + UPPER, 0, 'Light'),
