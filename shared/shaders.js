@@ -1988,7 +1988,9 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
     float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - 5.0 - u_w);
     if (inB > 0.0) {
         float f = clamp((d - 5.0) / u_w, 0.0, 1.0);
-        vec3 col = BANDC * mix(1.0, 0.5, f);
+        // bright at the outer edge (a lit rim) shading to deep colour at the inner one
+        vec3 col = mix(BANDC * 1.25, BANDC * 0.45, smoothstep(0.0, 1.0, f));
+        col = mix(col, LITC, (1.0 - smoothstep(0.0, 0.16, f)) * 0.55);
         if (t <= val) col = mix(LITC, BANDC * 1.4, f * 0.8);
         c = over(vec4(col, 0.95 * inB), c);
         float yv = u_scale.x - val * (u_scale.x - u_scale.y);
@@ -2025,16 +2027,15 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
     vec2 dir = normalize(a - b), nrm = vec2(-dir.y, dir.x);
     float side = dot(p - b, nrm);
     float along = segD(p, a, b);
-    if (along > 26.0) return c;
-    float body = cov(abs(side) - 4.0) * cov(segD(p, a, b) - 4.5);
-    vec3 col = vec3(1.0);
+    if (along > 30.0) return c;
+    float body = cov(abs(side) - 9.0) * cov(segD(p, a, b) - 9.5);
+    vec3 col = vec3(0.96);
     if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
-    if (zones > 0.5 && h < 0.1) col = vec3(0.3, 0.6, 1.0);
-    c = over(vec4(0.32, 0.34, 0.38, 0.85 * body), c);
+    c = over(vec4(0.2, 0.22, 0.27, 0.9 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
-    // marks across the bar at its ends and halfway
-    float mk = min(min(abs(segH(p, a, b) - 0.0), abs(segH(p, a, b) - 0.5)), abs(segH(p, a, b) - 1.0)) * length(a - b);
-    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 9.0)), c);
+    if (zones > 0.5) c = over(vec4(0.2, 0.55, 1.0, body * step(h, 0.1)), c);
+    float mk = abs(segH(p, a, b) - 0.5) * length(a - b);   // one tick beside the bar, halfway
+    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 15.0) * (1.0 - body)), c);   // ticks beside the bar only
     return c;
 }
 
@@ -2055,7 +2056,10 @@ void main() {
         c = over(vec4(0.05, 0.085, 0.15, clamp(hx + 0.5, 0.0, 1.0) * clamp(0.5 - inRect, 0.0, 1.0)), c);
         float k = min(hx, inRect);
         c.a *= clamp(0.5 - k, 0.0, 1.0);
-    } else if (u_road.w > 0.5 && p.y > u_road.x + 1.0 && hx > -1.0) {
+    } else {
+        c = over(vec4(0.05, 0.085, 0.15, clamp(hx + 0.5, 0.0, 1.0)), c);
+    }
+    if (u_hole.z <= 0.0 && u_road.w > 0.5 && p.y > u_road.x + 1.0 && hx > -1.0) {
         float dy = p.y - u_road.x;
         float xw = (p.x - u_size.x * 0.5) * u_road.y / dy;
         float px = dy / u_road.y;
@@ -2065,6 +2069,13 @@ void main() {
         float dash = step(fract(u_road.y * 120.0 / dy + u_road.z), 0.5);
         float lane = cov(abs(abs(xw) - 0.5) * px - hw) * dash;
         c = over(vec4(0.85, 0.9, 1.0, 0.6 * fade * max(edge, lane)), c);
+    }
+    // shades: each bracket's colour glows in over the hexagon's inside edge, over the map too (as BMW's own screen)
+    float m = clamp(hexIn(p, 0.0) + 0.5, 0.0, 1.0);
+    if (m > 0.0) {
+        float gL = exp(-max(dIn(p) - u_inner, 0.0) / 85.0), gR = exp(-max(dIn(pm) - u_inner, 0.0) / 85.0);
+        c = over(vec4(0.12, 0.45, 1.0, 0.42 * gL * m), c);
+        c = over(vec4(1.0, 0.12, 0.15, 0.42 * gR * m), c);
     }
     // the fuel and oil bars in the hexagon's lower corners, over the map too (as BMW's own screen)
     c = bar(p, u_fuelSeg, u_fuel, 0.0, c);

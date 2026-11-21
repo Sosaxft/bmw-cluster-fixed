@@ -55,3 +55,11 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - The brackets and scale numbers are the Sport theme's, traced off a real car; the rest measured on a straightened
   photo of BMW's screen. Barlow lettering (closest open font to BMW's), new l_* fonts.
 - New: shaders.js HEXLC (same inputs as Sport / Hex Map), `lcmap` colours, layout written by tools/gen_lcmap.py.
+
+## 0.21.1 — Live Cockpit Map, closer to BMW's (v1 kept on branch backup-lcmap-v1)
+- Lettering: Inter (SIL OFL, tools/fonts-src/Inter-OFL.txt), a grotesque like BMW's own; new l_* fonts.
+- Shades: each bracket's blue / red glows in over the map's edges; the bands have a lit rim at their outer edge.
+- Fuel and oil gauges as BMW's: thick white slanted bars, the oil bar's cold end blue, three numbers along each
+  (1 / 1/2 / 0, 300 / 210 / 120 °F), moved off the brackets.
+- No road: with no map up, the hexagon stays a dark night-map blue. The map itself comes from Maps on cluster
+  (robertnisipeanu/idrive-apps): CarPlay's Apple Maps, Waze or Google Maps.
