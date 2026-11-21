@@ -13,6 +13,12 @@ Besides its own code, the app ships with:
    kit/runtime/canvas.js) are ported from the same Redline app, directions by its authors, same licence.
    The count-in shift lights (shift_cue.js) and the switch-off guard (vehicle_state.js) are ported from
    the same Redline app, same licence.
+   The whole Redline app (redline/: its HUD with every layout including the G80 "Ramp", its centre-screen
+   page, learning, shift scoring and settings, with its own copy of the kit in redline/kit) runs inside HUD
+   Widgets, from that repository as of commit a948390 (redline/UPSTREAM), same licence. Changed here: it is
+   started by HUD Widgets' main.js instead of its own mgu.run, its kit sits one folder deeper, the settings
+   hudX / hudY / redline are named rlHudX / rlHudY / rlRedline, its log viewer reads HUD Widgets' log, and on
+   the bench its cluster-render socket follows HUD_CLUSTER_SOCKET.
    Its licence is reproduced at the end of this file.
 
 2. cluster_render_client.js: Mozilla Public License 2.0, Copyright (C) 2026 Robert Nisipeanu.

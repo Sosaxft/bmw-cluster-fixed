@@ -193,6 +193,8 @@ def build_ui(spec, language='en'):
 
     def settings_items(items):
         for s in spec['settings']:
+            if s.get('hidden'):
+                continue        # kept by the app, not listed (as upstream's build)
             name = 'SET_' + s['key'].upper()
             if s['type'] == 'bool':
                 items.append(comp('checkbox', name, rows=[text_row('SET_' + s['key'], s['label'])]))
@@ -554,7 +556,17 @@ def build(app_id, language='en'):
             raise SystemExit('%s: app.json "shared" lists %r, which is not a .js file in shared/' % (app_id, f))
         if not os.path.exists(os.path.join(adir, f)):
             shutil.copy(sp, os.path.join(src, 'javascript', f))
+    # bimmer-lab addition: app.json "codeDirs" names folders of code that ship as they are (javascript/<dir>), e.g. HUD
+    # Widgets' redline/ (the Redline app with its own kit, run in place of the widgets engine). A kit/ inside one
+    # gets this build's app-spec.json, locale.json and missing-interfaces.json too (below).
+    code_dirs = spec.get('codeDirs', [])
+    for d in code_dirs:
+        if os.path.basename(d) != d or not os.path.isdir(os.path.join(adir, d)):
+            raise SystemExit('%s: app.json "codeDirs" lists %r, which is not a folder of the app' % (app_id, d))
+        shutil.copytree(os.path.join(adir, d), os.path.join(src, 'javascript', d))
     for f in os.listdir(adir):
+        if f in code_dirs:
+            continue
         if f.endswith('.js'):
             shutil.copy(os.path.join(adir, f), os.path.join(src, 'javascript', 'app.js' if f == 'main.js' else f))
         elif f.endswith(('.wasm', '.wad')) or f in ('LICENSE', 'NOTICE'):
@@ -613,6 +625,12 @@ def build(app_id, language='en'):
     if credit(language):
         locale['credit'] = credit(language)['corner']
     json.dump(locale, open(os.path.join(src, 'javascript', 'kit', 'locale.json'), 'w', encoding='utf-8', newline='\n'), ensure_ascii=False)
+    json.dump(missing, open(os.path.join(src, 'javascript', 'kit', 'missing-interfaces.json'), 'w', encoding='utf-8', newline='\n'), indent=1)
+    for d in code_dirs:
+        dk = os.path.join(src, 'javascript', d, 'kit')
+        if os.path.isdir(dk):
+            for f in ('app-spec.json', 'locale.json', 'missing-interfaces.json'):
+                shutil.copy(os.path.join(src, 'javascript', 'kit', f), os.path.join(dk, f))
     shutil.copy(os.path.join(SDK, 'index.js'), os.path.join(src, 'node_modules', 'oap-sdk', 'index.js'))
     shutil.copy(os.path.join(SDK, 'package.json'), os.path.join(src, 'node_modules', 'oap-sdk', 'package.json'))
 

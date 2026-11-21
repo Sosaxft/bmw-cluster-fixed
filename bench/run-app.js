@@ -35,7 +35,16 @@ process.on('uncaughtException', (e) => { log.error('uncaught (the car would exit
 
 try { fs.mkdirSync(dataDir); } catch (e) { /* there */ }
 const { headUnit } = require(path.join(__dirname, '..', 'kit', 'tools', 'hu-stub.js'));
-const hu = headUnit(stage, { live: true, dataDir, log, image: () => Promise.resolve() });
+// BENCH_PAGE_PNG=<file>: the centre screen's picture (software path) saved there, at most once a second
+let pageAt = 0;
+const pageImage = (name, cv) => {
+    if (process.env.BENCH_PAGE_PNG && name === 'MAIN_GFX' && cv && cv.png && Date.now() - pageAt > 1000) {
+        pageAt = Date.now();
+        try { fs.writeFileSync(process.env.BENCH_PAGE_PNG, cv.png()); } catch (e) { log.warn('page png: ' + e); }
+    }
+    return Promise.resolve();
+};
+const hu = headUnit(stage, { live: true, dataDir, log, image: pageImage });
 const { spec, settings, ui } = hu;
 // a stand-in for BMW's guidance service (the HUD's directions), driven by POST /nav (fake-nav.js)
 const fakeNav = require('./fake-nav').install(hu, log);

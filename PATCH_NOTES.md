@@ -84,3 +84,17 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   as on BMW's screen.
 - A thick bar under each bracket's bottom run, bright at the bracket and fading toward the middle.
 - Fuel and oil gauges redrawn like BMW's: thinner, square-ended and cut into short segments, dim where empty.
+
+## HUD Widgets 0.17.0 — Redline built in
+- The whole Redline app (cauliflowermossgrape/idrive7-apps apps/redline, MIT, commit a948390) now runs inside HUD
+  Widgets, in the same process (apps/idrive_hud_widgets/redline/, with its own kit; main.js starts it, screen_mux.js
+  shares the centre screen). Redline can be uninstalled: one app starts with the car and has the HUD.
+- Redline's HUD shows where its settings say and the widgets everywhere else: by default its G80 M3 / M4 "Ramp" HUD
+  is on in Sport, and Comfort / Eco Pro keep the widgets' layout (the widgets step aside while Redline's tach holds
+  the HUD, kit hud_claim). Redline no longer turns its own HUD off at switch-off (hudHandBack off by default here).
+- Every Redline setting is in the settings list as "Redline: ..." (tools/merge_redline.py merges its app.json);
+  hudX / hudY / redline are rlHudX / rlHudY / rlRedline so they don't clash with the widgets' own.
+- Centre screen: the bar's "Redline / Widgets" button, or setting "Centre screen page", flips between the widgets'
+  page and Redline's (Tach, Shift log, Learned, HUD looks).
+- build.py: app.json "codeDirs" ships folders of code as they are; settings marked "hidden" stay out of the list.
+- Bench: BENCH_PAGE_PNG=<file> saves the centre screen's picture.
