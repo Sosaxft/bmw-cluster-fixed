@@ -2094,6 +2094,156 @@ void main() {
 }
 `;
 
+const G80MAP = `// The G80 Map theme in one cluster-render "effect" layer (GLSL ES 1.00), after the G80 / G82 M3 and M4's head-up display as
+// Redline draws it (redline/hud-m.js drawRamp), scaled up to the panel: one thick cream rail climbing from the 0 at the
+// bottom left, bending round a wide knee and running flat over the map; a rounded tab hanging from it every 1000 rpm (a V
+// cut over the numbered ones, a wall at each end); the revs a cream band under the rail up to a red needle, split round
+// each tab; the red zone a thin red line ahead of the revs after a yellow dash and dot; 8 slanted shift lights over the
+// flat part (6 yellow, 2 red, the last twice as wide). The Waze map shows through BMW's map window and fades out into
+// the black at its edges (u_fade px a side), so the gear and speed on the left and the readouts on the right sit on black.
+// (0,0) top-left; the rail's path is worked out in hud.js (g80 widget) from the layout's "rail".
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_l1;       // the climb: start x, y; where it meets the knee's arc x, y
+uniform vec4 u_arc;      // the knee: centre x, y, radius, start angle (radians; it ends straight up)
+uniform vec4 u_len;      // the climb's length, the arc's, the flat part's end x, the whole rail's length
+uniform vec4 u_band;     // rail thickness, band from, band to (px under the rail's top edge), the gap round a tab
+uniform vec4 u_tab;      // a numbered tab's half width, another's, its depth under the rail, its corner radius
+uniform vec4 u_v;        // the V cut's half width and depth, an end wall's width, the needle's width
+uniform vec4 u_rev;      // revs, the redline, the peak (-1 none) as 0..1 of the scale; the number of tabs past the 0
+uniform vec4 u_lgeo;     // the shift lights: left x, right x, top y, bottom y
+uniform vec4 u_lit;      // lights lit (0..8), all red (flash), slant px, shown (0 / 1)
+uniform vec4 u_hole;     // the map window x, y, w, h (w 0: no map)
+uniform vec4 u_fade;     // the map's fade a side: left, top, right, bottom px
+
+const vec3 CREAM = vec3(0.957, 0.945, 0.902);
+const vec3 RED = vec3(1.0, 0.275, 0.212);
+const vec3 YELLOW = vec3(1.0, 0.847, 0.29);
+
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 over(vec4 top, vec4 under) {
+    float a = top.a + under.a * (1.0 - top.a);
+    if (a <= 0.0) return vec4(0.0);
+    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+}
+float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+
+// along the rail: x = px along it (unclamped at the ends), y = px under its top edge, z = how far off the path's span
+vec3 rail(vec2 p) {
+    vec2 P0 = u_l1.xy, T1 = u_l1.zw;
+    float L1 = u_len.x;
+    vec2 u = (T1 - P0) / L1, n = vec2(-u.y, u.x);
+    float t = dot(p - P0, u);
+    float e1 = length(p - (P0 + u * clamp(t, 0.0, L1)));
+    vec2 v = p - u_arc.xy;
+    float r = length(v), a = atan(v.y, v.x);
+    float ac = clamp(a, u_arc.w, -1.5707963);
+    float e2 = length(p - (u_arc.xy + u_arc.z * vec2(cos(ac), sin(ac))));
+    float xs = u_arc.x, ky = u_arc.y - u_arc.z;
+    float e3 = length(p - vec2(clamp(p.x, xs, u_len.z), ky));
+    vec3 best = vec3(t, dot(p - P0, n), e1);
+    if (e2 < best.z) best = vec3(L1 + u_arc.z * (ac - u_arc.w), u_arc.z - r, e2);
+    if (e3 < best.z) best = vec3(L1 + u_len.y + (p.x - xs), p.y - ky, e3);
+    return best;
+}
+
+void main() {
+    vec2 p = v_uv * u_size;
+    // the map: see-through in BMW's window, fading out into the black over u_fade at each side
+    float m = 0.0;
+    if (u_hole.z > 0.0) {
+        float l = p.x - u_hole.x, tp = p.y - u_hole.y, rr = u_hole.x + u_hole.z - p.x, bt = u_hole.y + u_hole.w - p.y;
+        m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, tp) * smoothstep(0.0, u_fade.z, rr) * smoothstep(0.0, u_fade.w, bt);
+    }
+    // no map: a faint warm floor in the middle, so the panel isn't flat black
+    vec2 cc = (p - vec2(u_size.x * 0.5, u_size.y * 0.55)) / vec2(620.0, 260.0);
+    float floorG = u_hole.z > 0.0 ? 0.0 : 0.07 * exp(-dot(cc, cc));
+    vec4 c = vec4(CREAM * floorG, 1.0 - m);
+
+    vec3 R = rail(p);
+    float s = R.x, d = R.y, ALL = u_len.w;
+    float RT = u_band.x, D0 = u_band.y, D1 = u_band.z, GAPT = u_band.w;
+    float onPath = cov(-s) * cov(s - ALL);
+    // glows fade out past the rail's ends (no hard edge)
+    float soft = exp(-max(max(-s, s - ALL), 0.0) / 14.0);
+    if (R.z < D1 + 110.0) {
+        float n = u_rev.w;
+        float k = clamp(floor(s / ALL * n + 0.5), 0.0, n), sk = k / n * ALL, ds = s - sk;
+        bool numbered = mod(k, 2.0) < 0.5;
+        float hw = numbered ? u_tab.x : u_tab.y;
+        bool end = k < 0.5 || k > n - 0.5;
+        // the tab (or an end's wall, the band's full depth)
+        float tdep = end ? D1 - RT + 2.0 : u_tab.z;
+        float ew = end ? u_v.z : hw;
+        float tab = sdBox(vec2(ds, d - (RT + tdep * 0.5 - 1.0)), vec2(ew, tdep * 0.5 + 1.0), u_tab.w);
+        float sr = u_rev.x * ALL, NW = u_v.w;
+        // the band: cream from the 0 to just before the needle, a gap round every tab; shaded darker towards its foot
+        float inBand = cov(D0 - d) * cov(d - D1) * cov(-s) * cov(s - (sr - NW - 4.0)) * clamp(tab - GAPT + 0.5, 0.0, 1.0);
+        if (u_rev.x > 0.004) {
+            float f = clamp((d - D0) / (D1 - D0), 0.0, 1.0);
+            vec3 bc = mix(CREAM * 1.02, CREAM * vec3(0.86, 0.83, 0.76), f * f);
+            // bloom off the lit band
+            float gb = exp(-max(max(D0 - d, d - D1), 0.0) / 16.0) * 0.22 * exp(-max(max(-s, s - sr), 0.0) / 16.0) * clamp(tab - GAPT, 0.0, 1.0);
+            c = over(vec4(CREAM, gb), c);
+            c = over(vec4(bc, inBand), c);
+            // the needle: a red bar the band's height, a hair's gap after the band
+            float nd = cov(D0 - d) * cov(d - D1) * cov(sr - NW - s) * cov(s - sr) * clamp(tab - GAPT + 0.5, 0.0, 1.0);
+            c = over(vec4(RED, 0.35 * exp(-max(max(D0 - d, d - D1), max(sr - NW - s, s - sr)) / 10.0) * step(0.0, s)), c);
+            c = over(vec4(RED, nd), c);
+        }
+        // the red zone ahead of the revs: a yellow dash and dot, then a thin red line to the end, clear of the tabs
+        float zs = u_rev.y * ALL, zm = D0 + 8.0;
+        float ahead = step(sr + 3.0, s);
+        float lane = cov(abs(d - zm) - 3.2) * clamp(tab - GAPT + 0.5, 0.0, 1.0) * ahead * onPath;
+        float zr = cov(zs + 12.0 - s) * cov(s - ALL + 2.0);
+        float zy = max(cov(zs - 48.0 - s) * cov(s - (zs - 24.0)), cov(zs - 14.0 - s) * cov(s - (zs - 6.0)));
+        c = over(vec4(RED, lane * zr), c);
+        c = over(vec4(YELLOW, lane * zy), c);
+        // the peak: a white stroke across the band while the revs are under it
+        if (u_rev.z > u_rev.x + 0.004) c = over(vec4(1.0, 1.0, 1.0, cov(abs(s - u_rev.z * ALL) - 4.4) * cov(D0 - d) * cov(d - D1)), c);
+        // the rail with its tabs, the V cut over the numbered ones; a soft glow round it
+        float railA = cov(-d) * cov(d - RT) * onPath;
+        float shape = max(railA, cov(tab) * cov(-d + RT - 1.5));
+        if (numbered || end) {
+            float vd = end ? u_v.y * 1.4 : u_v.y;
+            float vcut = abs(ds) - u_v.x * (1.0 - d / vd);
+            if (d < vd) shape *= clamp(vcut + 0.5, 0.0, 1.0);
+        }
+        float distShape = max(max(-d, d - RT), 0.0);
+        c = over(vec4(CREAM, 0.2 * exp(-distShape / 14.0) * soft * (1.0 - shape)), c);
+        // lit from above: the rail's top edge a touch brighter than its foot
+        vec3 rc = mix(vec3(1.0, 0.995, 0.97), CREAM * 0.9, clamp(d / (RT + u_tab.z), 0.0, 1.0));
+        c = over(vec4(rc, shape), c);
+    }
+    // the shift lights over the flat part: hidden until the count-in, then lit left to right, all red at the shift
+    if (u_lit.w > 0.5 && p.y > u_lgeo.z - 2.0 && p.y < u_lgeo.w + 2.0) {
+        float g = 12.0, wu = (u_lgeo.y - u_lgeo.x - 7.0 * g) / 9.0;
+        float sh = u_lit.z * (u_lgeo.w - p.y) / (u_lgeo.w - u_lgeo.z);
+        float x = p.x - sh - u_lgeo.x;
+        float i = clamp(floor(x / (wu + g)), 0.0, 7.0);
+        float xs = i * (wu + g), wi = i > 6.5 ? 2.0 * wu : wu;
+        float lx = x - xs;
+        float dx = max(-lx, lx - wi), dy = max(u_lgeo.z - p.y, p.y - u_lgeo.w);
+        float inside = cov(dx) * cov(dy);
+        bool red = i > 5.5;
+        vec3 lc = u_lit.y > 0.5 ? RED : (red ? RED : YELLOW);
+        if (i < u_lit.x - 0.5 || u_lit.y > 0.5) {
+            c = over(vec4(lc, 0.3 * exp(-max(max(dx, dy), 0.0) / 9.0)), c);
+            c = over(vec4(lc, inside), c);
+        } else {
+            float edge = cov(abs(max(dx, dy) + 1.5) - 1.5);
+            c = over(vec4(red ? RED : CREAM, (red ? 0.6 : 0.45) * edge), c);
+        }
+    }
+    gl_FragColor = c;
+}
+`;
+
 const TURN = `// HUD turn-signal arrows (hud.js widget type "turn", shared/turn.js): a filled arrow at each end of the layer, pointing
 // out, in u_on while that side's lamp is lit (u_lit) with a soft glow; nothing otherwise (black shows as nothing on the
 // HUD). GLSL ES 1.00, v_uv (0,0) is the top-left.
@@ -2139,4 +2289,4 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN };
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, g80: G80MAP };

@@ -63,6 +63,16 @@ const THEMES = {
         ink: [12, 12, 14, 255], accent: [60, 215, 255, 255], well: [0, 0, 0, 255], faint: [96, 110, 135, 255],
         sblue: [120, 170, 245, 255], spink: [236, 140, 140, 255], sred: [235, 60, 70, 255],
     },
+    // G80 Map (layout g80map.json, tools/gen_g80map.py): the G80 M3 / M4 HUD's cream on black (Redline's Ramp), the map.
+    g80map: {
+        name: 'G80 Map',
+        fg: [244, 241, 230, 255], dim: [178, 172, 158, 255], track: [70, 68, 62, 255], arc: [244, 241, 230, 255],
+        glow: 0, stripe: false,
+        bar: { low: [244, 241, 230], mid: [255, 216, 74], high: [255, 70, 54], midAt: 'shift' },
+        rev: { from: [255, 70, 54], to: [255, 70, 54] },
+        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [244, 241, 230, 255], head: [226, 222, 210, 255],
+        ink: [12, 12, 14, 255], accent: [255, 216, 74, 255], well: [0, 0, 0, 255], faint: [110, 106, 96, 255],
+    },
     // Live Cockpit Map (layout lcmap.json, tools/gen_lcmap.py): BMW's own iDrive 7 screen with the map up, blue / red.
     lcmap: {
         name: 'Live Cockpit Map',

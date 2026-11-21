@@ -101,6 +101,11 @@
  *             uniforms as sdash, but both brackets closed into a hexagon by their top / bottom runs (topEnd), red to orange,
  *             the map cut see-through to the hexagon's inside only (and never past "hole"; "holeRadius" is the inset past
  *             the inner line), the road kept inside the hexagon, "strip" [outer x, y, thickness, gap] thin ledge lines.
+ *   g80       effect layer; the G80 Map theme (shaders.js g80, layout made by tools/gen_g80map.py): Redline's G80 M3 / M4
+ *             HUD "Ramp" rev gauge at panel scale, its shift lights, and the Waze map fading out at BMW's map window's
+ *             edges. "rail" [x0, y0, kx, ky, x1, kr], "band" [rail thickness, band from, to, gap], "tab" [half width,
+ *             odd half width, depth, radius], "v" [V half width, depth, end wall, needle width], "lights" [x0, x1, y0,
+ *             y1, slant], "fade" [l, t, r, b], "rpmMax"; "hole" / "holeWhen" as hexlc.
  *   hexlc     effect layer; the Live Cockpit Map theme (shaders.js hexlc, layout made by tools/gen_lcmap.py): hexdash's
  *             keys and hexagon map cut, blue speed / red rev brackets with bold outer lines, the fuel / oil bars kept
  *             up over the map; "strip"[0] is where the bottom runs end (nothing else of "strip" is used).
@@ -315,7 +320,7 @@ const TEXT_MS = 200;             // text re-draws at most 5 times a second (what
 // the readouts that move while driving (speed, gear, revs, boost) re-draw twice as often, so they don't trail the car;
 // each change still sends only its changed rect (a digit or two), well inside the upload budget
 const LIVE_TEXT_MS = 100;
-const LIVE_TOKENS = /\{\{(speed|speed2|rpm|rpm10|gear|gearnum|gearInD|stage|boost)\}\}/;
+const LIVE_TOKENS = /\{\{(speed|speed2|rpm|rpm10|gear|gearnum|gearInD|stage|prog|boost)\}\}/;
 // the rev counter's smoothing (BMW-like, hides idle wobble): 60 ms, was 120 ms (felt late on the car, Nov 20 2026)
 const RPM_TAU_MS = 60;
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
@@ -1790,6 +1795,10 @@ class HudApp {
                 const d = this.car.data();
                 return d.stage === 'D' || (!d.stage && isNum(d.gear) && d.gear > 0) ? this._program(d) : (d.stage || '-');
             }
+            case 'prog': {           // D / S / M while driving, else nothing (the G80 Map's letter by the gear)
+                const d = this.car.data();
+                return d.stage === 'D' || (!d.stage && isNum(d.gear) && d.gear > 0) ? this._program(d) : '';
+            }
             case 'gearInD': {        // the gear number while driving, else nothing (the M "2D")
                 const d = this.car.data();
                 return (d.stage === 'D' || (!d.stage && isNum(d.gear))) && isNum(d.gear) && d.gear > 0 ? String(d.gear) : '';
@@ -2154,6 +2163,29 @@ class HudApp {
             c.uniform(ref, 'u_strip', w.strip);
             c.uniform(ref, 'u_topEnd', [w.topEnd]);
             c.uniform(ref, 'u_road', w.road ? [w.road[0], w.road[1], 0, 1] : [0, 1, 0, 0]);
+        } else if (w.type === 'g80') {
+            // the rail's path, as Redline's RPATH (hud-m.js): a climb from (x0, y0) towards the knee (kx, ky), a wide arc
+            // round it of radius kr, then flat to x1
+            const [x0, y0, kx, ky, x1, kr] = w.rail;
+            const P0 = [x0 - w.x, y0 - w.y], K = [kx - w.x, ky - w.y];
+            const cl = Math.hypot(K[0] - P0[0], K[1] - P0[1]), u = [(K[0] - P0[0]) / cl, (K[1] - P0[1]) / cl];
+            const turn = Math.acos(u[0]), dk = kr * Math.tan(turn / 2);
+            const T1 = [K[0] - u[0] * dk, K[1] - u[1] * dk], C = [K[0] + dk, K[1] + kr];
+            const a0 = Math.atan2(T1[1] - C[1], T1[0] - C[0]);
+            const L1 = Math.hypot(T1[0] - P0[0], T1[1] - P0[1]), La = kr * (-Math.PI / 2 - a0), L2 = (x1 - w.x) - C[0];
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_l1', [P0[0], P0[1], T1[0], T1[1]]);
+            c.uniform(ref, 'u_arc', [C[0], C[1], kr, a0]);
+            c.uniform(ref, 'u_len', [L1, La, x1 - w.x, L1 + La + L2]);
+            c.uniform(ref, 'u_band', w.band);
+            c.uniform(ref, 'u_tab', w.tab);
+            c.uniform(ref, 'u_v', w.v);
+            const lg = w.lights;
+            c.uniform(ref, 'u_lgeo', [lg[0] - w.x, lg[1] - w.x, lg[2] - w.y, lg[3] - w.y]);
+            c.uniform(ref, 'u_lit', [0, 0, lg[4], 0]);
+            c.uniform(ref, 'u_rev', [0, 1, -1, (w.rpmMax || 8000) / 1000]);
+            c.uniform(ref, 'u_hole', this._hole(w));
+            c.uniform(ref, 'u_fade', w.fade || [120, 100, 120, 60]);
         } else if (w.type === 'mview') {
             // the left scale's line: points (layer px) and the arc length at each (the shader mirrors it for the right)
             const pts = [], cum = [];
@@ -2768,6 +2800,30 @@ class HudApp {
             x.c.uniform(x.ref, 'u_rpm', [vals[1]]);
             x.c.uniform(x.ref, 'u_fuel', [vals[2]]);
             x.c.uniform(x.ref, 'u_oil', [vals[3]]);
+        } else if (w.type === 'g80') {
+            const max = w.rpmMax || 8000, rpm = this._raw('rpm'), sp = this._shift();
+            const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 1000) / 1000;
+            const rv = isNum(rpm) && rpm > 50 ? q(rpm / max) : 0;
+            const pk = this.score && this.score.peak > 0 ? q(this.score.peak / max) : -1;
+            // the lights, as the "lights" widget: the count-in, or from 3000 rpm up to the shift point
+            const n = 8;
+            let lit, red;
+            if (this._countIn()) {
+                lit = Math.floor(this.cue.fraction(rpm) * n);
+                red = this.cue.now.shift ? (this.cue.blink(now) ? 1 : 0) : 0;
+                if (this.cue.now.shift && !red) lit = 0;
+            } else {
+                const from = Math.min(3000, sp.rpm - 500);
+                lit = isNum(rpm) ? Math.floor(Math.min(1, Math.max(0, (rpm - from) / (sp.rpm - from))) * n) : 0;
+                red = sp.now ? 1 : 0;
+            }
+            const shown = lit > 0 || red ? 1 : 0;
+            const redF = Math.min(this.setting('redline'), max - 250) / max;
+            const key = [rv, pk, redF, lit, red].join('|');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_rev', [rv, redF, pk, max / 1000]);
+            x.c.uniform(x.ref, 'u_lit', [red ? n : lit, red, w.lights[4], shown]);
         } else if (w.type === 'vdash') {
             const T = w.tach, q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 400) / 400;
             const frac = (g) => { const v = g && g.signal ? this._raw(g.signal) : null; return isNum(v) ? q((v - g.min) / (g.max - g.min)) : 0; };
