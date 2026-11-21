@@ -10,23 +10,27 @@ lettering (the G80 M3 / M4 look):
     python3 tools/bake_squared.py           (needs Pillow)
 """
 import base64, json, os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 import bake_fonts as B
 
 OUT = os.path.join(B.APPS, 'cluster_themes', 'hud', 'fonts')
 SS = 4                     # supersampling
 GAP = 0.22                 # letter spacing, x the height (sqText)
-SQ = {'0': 'abcdef', '2': 'abged', '3': 'abgcd', '4': 'g', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg',
+SQ = {'0': 'abcdef', '2': 'abged', '3': 'abgcd', '4': 'g', '5': 'afgcd', '6': 'afgedc', '7': 'a', '8': 'abcdefg',
       '9': 'abfgcd', '-': 'g', 'S': 'afgcd', 'P': 'abfge', 'N': 'efbc', 'R': 'abfge', 'M': 'efabc', 'D': 'abcdef'}
 
 
+WR = 1.15                  # width / height of a digit (bake_sq sets it per font)
+TR = 0.25                  # stroke / height
+
+
 def adv_w(ch, h):
-    return sq_t(h) if ch == '.' else h * 0.55 if ch == '1' else h * 1.15
+    return sq_t(h) if ch == '.' else h * WR * 0.48 if ch == '1' else h * WR
 
 
 def sq_t(h):
-    return max(1.9, h * 0.25)
+    return max(1.9, h * TR)
 
 
 def glyph(d, ch, x, y, h):
@@ -52,13 +56,17 @@ def glyph(d, ch, x, y, h):
     if ch == 'N': diag(x + t * 0.4, y, x + w - t * 0.4, y + h)
     if ch == 'R': diag(x + w * 0.35, y + hh, x + w + t * 0.45, y + h)
     if ch == 'M': rect([x + w / 2 - t / 2, y, t, hh])
+    if ch == '7':   # BMW's 7: the stem slants from the top right down to the left of the middle
+        quad([[x + w - t, y + t * 0.6], [x + w, y + t * 0.6], [x + w * 0.42 + t * 0.55, y + h], [x + w * 0.42 - t * 0.55, y + h]])
     if ch == '4':
         sx = x + w * 0.8 - t
         rect([sx, y, t, h])
         quad([[sx - t * 0.9, y], [sx + t * 0.6, y], [x + t * 1.6, y + hh - t / 2], [x, y + hh - t / 2]])
 
 
-def bake_sq(name, h, chars):
+def bake_sq(name, h, chars, wr=1.15, tr=0.25, rnd=0.0):
+    global WR, TR
+    WR, TR = wr, tr
     P = B.PAD
     height = h + 2 * P
     cells = []
@@ -69,6 +77,8 @@ def bake_sq(name, h, chars):
         w = int(adv_w(c, h) + 0.999) + 2 * P + 2     # the R's leg reaches a little past its box
         big = Image.new('L', (w * SS, height * SS), 0)
         glyph(ImageDraw.Draw(big), c, P * SS, P * SS, h * SS)
+        if rnd > 0:     # rounded corners, as BMW's: blur the hard shape and cut it again at half
+            big = big.filter(ImageFilter.GaussianBlur(rnd * h * SS)).point(lambda v: 255 if v >= 128 else 0)
         cells.append((c, big.resize((w, height), Image.LANCZOS), -P, adv))
     x = y = 0
     placed = {}
@@ -95,22 +105,24 @@ def bake_sq(name, h, chars):
 DIG = '0123456789'
 ASCII = ''.join(chr(i) for i in range(32, 127))
 SQUARED = [
-    ('q_big', 60, DIG + 'PRNDSM-'),       # the speed and the gear
-    ('q_scale', 21, DIG),                 # the scale numbers
+    # name, height, characters, width / height, stroke / height, corner rounding (x the height)
+    ('q_big', 58, DIG + 'PRNDSM-', 1.3, 0.25, 0.05),        # the speed and the gear: wide, as BMW's "0 mph" and "P"
+    ('q_scale', 22, DIG, 0.78, 0.2, 0.05),                  # the scale numbers: narrow, as BMW's 140 160 / 1 .. 8
 ]
 UBUNTU = [
-    ('u_small', 'Ubuntu-Medium.ttf', 25, B.DIGITS + '/.:-°% '),               # the gauges' numbers (1/2, temperatures)
-    ('u_cap', 'Ubuntu-Medium.ttf', 22, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x '),   # mph, 1/min x 1000, units, the badge
-    ('u_val', 'Ubuntu-Bold.ttf', 28, B.DIGITS + ':.-+° '),                    # the strip's clock, range, outside
-    ('u_mode', 'Ubuntu-Bold.ttf', 27, B.UPPER + ' '),                         # COMFORT / SPORT / ECO PRO
-    ('u_title', 'Ubuntu-Bold.ttf', 24, ASCII),                                # now playing on the map card
-    ('u_artist', 'Ubuntu-Medium.ttf', 20, ASCII),
-    ('u_clock', 'Ubuntu-Bold.ttf', 40, B.DIGITS + ': '),                     # the map card's clock
+    # BMW Type Next's look for the words: Inter (tools/fonts-src, OFL), weights by name
+    ('u_small', 'Inter[opsz,wght].ttf', 25, B.DIGITS + '/.:-°% ', 'Medium'),          # the gauges' numbers
+    ('u_cap', 'Inter[opsz,wght].ttf', 22, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x ', 'Medium'),   # mph, 1/min x 1000
+    ('u_val', 'Inter[opsz,wght].ttf', 28, B.DIGITS + ':.-+° ', 'Medium'),             # the strip's clock, outside
+    ('u_mode', 'Inter[opsz,wght].ttf', 27, B.UPPER + ' ', 'SemiBold'),                # COMFORT / SPORT / ECO PRO
+    ('u_title', 'Ubuntu-Bold.ttf', 24, ASCII, None),
+    ('u_artist', 'Ubuntu-Medium.ttf', 20, ASCII, None),
+    ('u_clock', 'Ubuntu-Bold.ttf', 40, B.DIGITS + ': ', None),
 ]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     for spec in SQUARED:
         bake_sq(*spec)
-    for name, file, size, chars in UBUNTU:
-        B.bake(OUT, name, file, size, chars)
+    for name, file, size, chars, weight in UBUNTU:
+        B.bake(OUT, name, file, size, chars, 0, weight)

@@ -33,7 +33,7 @@ MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster d
 MAPWIN = [257, 40, 1405, 620]
 HOLE = MAP
 FADE = [120, 60, 120, 50]
-SCRIM = [505, 1510, 340, 190]          # the speed's and the gear's centres x, y; the half width
+SCRIM = [505, 1490, 336, 172]          # the speed's and the gear's centres x, y; the oval's half width (its height x 0.4)
 
 # the Sport theme's brackets, traced off the car (sport.json)
 GEO = [120, 310.7, 604.0, 180]
@@ -73,10 +73,10 @@ widgets = [{
     'hole': HOLE, 'holeOver': MAPWIN, 'holeWhen': 'mapUp', 'holeInset': 0, 'holeRadius': 6, 'fade': FADE, 'scrim': SCRIM,
 }]
 for i, (x, y) in enumerate(SPD):
-    widgets.append(text('spd%d' % i, x, y + 1, 110, 25, '{{spd:%d}}' % i, 'q_scale', 'lscale', 'right',
+    widgets.append(text('spd%d' % i, x, y, 110, 26, '{{spd:%d}}' % i, 'q_scale', 'lscale', 'right',
                         near=['speed', i], nearColor='fg'))
 for i, (x, y) in enumerate(RPM):
-    widgets.append(text('rpm%d' % i, x, y + 1, 60, 25, str(i), 'q_scale', 'lscale', 'left', near=['rpm', i], nearColor='fg'))
+    widgets.append(text('rpm%d' % i, x, y, 60, 26, str(i), 'q_scale', 'lscale', 'left', near=['rpm', i], nearColor='fg'))
 widgets += [
     text('mph_cap', 338, 88, 80, 25, '{{u:speedLc}}', 'u_cap', 'lblue'),
     text('rpm_cap', 1442, 88, 200, 25, '1/min x 1000', 'u_cap', 'lred'),
@@ -84,9 +84,9 @@ widgets += [
     text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
     # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
-    text('speed', 385, 304, 240, 64, '{{speed}}', 'q_big', 'fg'),
+    text('speed', 372, 305, 266, 62, '{{speed}}', 'q_big', 'fg'),
     text('speed_unit', 455, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
-    text('gear', 1434, 304, 156, 64, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
+    text('gear', 1404, 305, 172, 62, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
     # the fuel and oil gauges' ends and icons (the Sport theme's, kept up with the map as on BMW's screen)
     # the fuel and oil gauges: thick slanted bars (shader), three numbers along each and the icon (as the photo)
     text('f_full', 393, 407, 60, 29, '1', 'u_small', 'fg'),

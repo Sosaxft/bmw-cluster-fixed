@@ -188,3 +188,11 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   while Redline's HUD has the HUD (Sport by default), the widgets no longer step aside completely: the "Blinkers only"
   layout stays up, so the green arrows flash in the HUD window's top corners over Redline's picture (clear of its
   tach). shared/hud.js _turnOverClaim; the status line says so.
+
+## Cluster Themes 0.25.0 — Live Cockpit Map: BMW's digits, the map round the speed and gear
+- Digits redrawn after BMW's own cluster (a photo of the car's stock M display, Nov 21 2026): squared with rounded
+  corners, wide for the speed and the gear (1.3 x the height), narrow for the scale numbers (0.78), the 7 with a
+  slanted stem (tools/bake_squared.py: per-font width, stroke and rounding). The words (mph, 1/min x 1000, the gauges'
+  numbers, the strip, the drive mode) in Inter, the closest open font to BMW Type Next.
+- The map is no longer cleared in a box: it fills the hexagon and is cut away only in an oval round the speed and
+  round the gear (gone behind them, back above and below them), as on BMW's own map view. hexlc 8539 tokens.

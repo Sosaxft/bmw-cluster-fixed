@@ -2066,12 +2066,12 @@ void main() {
     c = over(vec4(mix(vec3(0.1, 0.12, 0.16), vec3(0.06, 0.075, 0.105), clamp((p.y - u_geo.x) / (u_geo.z - u_geo.x), 0.0, 1.0)), clamp(hx + 0.5, 0.0, 1.0)), c);
     if (u_hole.z > 0.0) {
         // the map shows through, fading in from the hexagon's inner line (and dimmed outside it), out at the window's
-        // edges (u_fade), and darker behind the speed and the gear so they stay easy to read
+        // edges (u_fade), and gone round the speed and the gear (an oval each), so it never runs under them
         float l = p.x - u_hole.x, tp = p.y - u_hole.y, rr = u_hole.x + u_hole.z - p.x, bt = u_hole.y + u_hole.w - p.y;
-        vec2 sl = (p - u_scrim.xz) / vec2(u_scrim.w, u_scrim.w * 0.5), sr = (p - u_scrim.yz) / vec2(u_scrim.w, u_scrim.w * 0.5);
+        vec2 sl = (p - u_scrim.xz) / vec2(u_scrim.w, u_scrim.w * 0.4), sr = (p - u_scrim.yz) / vec2(u_scrim.w, u_scrim.w * 0.4);
         float m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, tp) * smoothstep(0.0, u_fade.z, rr)
             * smoothstep(0.0, u_fade.w, bt) * mix(0.3, 1.0, smoothstep(-40.0, 70.0, hx))
-            * (1.0 - 0.6 * exp(-dot(sl, sl)) - 0.6 * exp(-dot(sr, sr)));
+            * smoothstep(0.85, 1.7, min(length(sl), length(sr)));   // gone behind the speed and the gear, there above and below them
         c.a *= 1.0 - m;
     }
     // shades: each bracket's colour glows in over the hexagon's inside edge, over the map too (as BMW's own screen)
