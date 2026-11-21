@@ -202,3 +202,8 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   pattern through GitHub's API (60 requests an hour per address without a sign-in; a phone hotspot's address is shared),
   and when that limit refuses it the source keeps its old listing (mgu-updater sources.js repoEntries), which held the
   car at Cluster Themes 0.23.1. Components are read from GitHub's web hosts only, which that limit does not count.
+
+## Cluster Themes 0.25.1 — Live Cockpit Map: no second speed beside the speed
+- With a Waze on Cluster that draws the map under the theme (robertnisipeanu's 0.11), the theme's window onto BMW's map
+  slot now starts at x 690, past BMW's own map-screen speed readout ("mph", x ~600..712), so it no longer shows beside
+  the theme's speed. Drawn over the theme (the layout window) the window is unchanged.

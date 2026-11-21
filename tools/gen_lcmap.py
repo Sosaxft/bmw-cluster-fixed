@@ -31,8 +31,10 @@ MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster d
 # (1088x480 x 1.29), the theme drawn over it as an overlay: the map fades in from the hexagon's inner line, dimmed
 # outside it, darker behind the speed and the gear. Under the theme (0.11, the map slot) the window is BMW's map slot.
 MAPWIN = [257, 40, 1405, 620]
-HOLE = MAP
-FADE = [120, 60, 120, 50]
+# Under the theme (0.11) the window starts past BMW's own speed readout left of the map ("mph", car photo Nov 21 2026:
+# x ~600..712), which BMW's map screen draws there; drawn over the theme (holeOver) nothing of BMW's shows
+HOLE = [690, 120, 814, 480]
+FADE = [90, 60, 120, 50]
 SCRIM = [505, 1490, 336, 172]          # the speed's and the gear's centres x, y; the oval's half width (its height x 0.4)
 
 # the Sport theme's brackets, traced off the car (sport.json)
