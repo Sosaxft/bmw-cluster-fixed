@@ -16,6 +16,7 @@ const sensors = require('./sensors');
 const TYPES = {
     card: [],
     mapfade: ['hole'],
+    lcbg: [],
     text: ['text', 'font'],
     scale: ['font'],
     stripe: [],

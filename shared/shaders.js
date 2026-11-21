@@ -2056,7 +2056,8 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
 void main() {
     vec2 p = v_uv * u_size;
     vec2 pm = vec2(u_size.x - p.x, p.y);
-    vec4 c = vec4(0.03, 0.036, 0.05, 1.0);
+    // see-through round the hexagon: Live Cockpit Map's backdrop (lcbg, an ambient layer) shows there
+    vec4 c = vec4(0.0);
 
     c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, 0.0, c);
     c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, 1.0, c);
@@ -2113,6 +2114,45 @@ void main() {
 }
 `;
 
+// Live Cockpit Map's backdrop (hud.js widget "lcbg", class ambient, under the hexagon's layer): so the panel round the
+// hexagon is not flat black: a deep blue-grey, lifted in the middle, the speed side washed blue and the rev side red
+// from the brackets, a faint fine diagonal texture, a light rail along the top and the bottom (blue to red) fading at
+// its ends, and dark at the screen's very edges. See-through in the map's window (u_hole, u_fade) for a map drawn
+// under the theme; a map drawn over it covers it anyway.
+const LCBG = `precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_hole;
+uniform vec4 u_fade;
+uniform vec4 u_rails;    // the top rail's y, the bottom rail's y, their half length from the middle, brightness
+void main() {
+    vec2 p = v_uv * u_size;
+    vec2 cc = (p - vec2(u_size.x * 0.5, u_size.y * 0.55)) / u_size;
+    vec3 c = mix(vec3(0.05, 0.062, 0.085), vec3(0.028, 0.034, 0.048), clamp(length(cc * vec2(1.0, 2.2)) * 1.6, 0.0, 1.0));
+    float gl = exp(-length((p - vec2(220.0, 360.0)) / vec2(620.0, 300.0)));
+    float gr = exp(-length((p - vec2(1700.0, 360.0)) / vec2(620.0, 300.0)));
+    c += vec3(0.02, 0.09, 0.24) * gl * 0.55 + vec3(0.24, 0.03, 0.05) * gr * 0.55;
+    // a faint diagonal weave
+    float w1 = abs(fract((p.x + p.y) / 7.0) - 0.5), w2 = abs(fract((p.x - p.y) / 7.0) - 0.5);
+    c += vec3(0.012, 0.014, 0.02) * smoothstep(0.32, 0.5, max(w1, w2));
+    // the rails: blue on the left, red on the right, white-hot in the middle, fading towards the ends
+    float rx = (p.x - u_size.x * 0.5) / u_rails.z;
+    vec3 rc = mix(mix(vec3(0.3, 0.68, 1.0), vec3(0.85, 0.88, 0.95), smoothstep(-1.0, 0.0, rx)), vec3(1.0, 0.3, 0.32), smoothstep(0.0, 1.0, rx));
+    float along = 1.0 - smoothstep(0.55, 1.0, abs(rx));
+    float r1 = exp(-abs(p.y - u_rails.x) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.x) / 9.0);
+    float r2 = exp(-abs(p.y - u_rails.y) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.y) / 9.0);
+    c = mix(c, rc, clamp((r1 + r2) * along * u_rails.w, 0.0, 1.0));
+    // the screen's very edges darker
+    c *= 1.0 - 0.45 * smoothstep(0.38, 0.5, abs(v_uv.x - 0.5));
+    float m = 0.0;
+    if (u_hole.z > 0.0) {
+        float l = p.x - u_hole.x, t = p.y - u_hole.y, r = u_hole.x + u_hole.z - p.x, b = u_hole.y + u_hole.w - p.y;
+        m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, t) * smoothstep(0.0, u_fade.z, r) * smoothstep(0.0, u_fade.w, b);
+    }
+    gl_FragColor = vec4(c, 1.0 - m);
+}
+`;
+
 const TURN = `// HUD turn-signal arrows (hud.js widget type "turn", shared/turn.js): a filled arrow at each end of the layer, pointing
 // out, in u_on while that side's lamp is lit (u_lit) with a soft glow; nothing otherwise (black shows as nothing on the
 // HUD). GLSL ES 1.00, v_uv (0,0) is the top-left.
@@ -2158,4 +2198,4 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, mapfade: MAPFADE };
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, mapfade: MAPFADE, lcbg: LCBG };

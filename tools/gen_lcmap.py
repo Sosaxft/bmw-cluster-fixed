@@ -63,6 +63,10 @@ def icon(id_, name, x, y, w, h, color='dim'):
 
 
 widgets = [{
+    # the backdrop round the hexagon (no flat black): washes, a weave, light rails over the top and along the bottom
+    'id': 'bg', 'type': 'lcbg', 'class': 'ambient', 'z': 0, 'x': 0, 'y': 0, 'w': W, 'h': H, 'rails': [46, 644, 760, 0.85],
+    'hole': HOLE, 'holeOver': MAPWIN, 'holeWhen': 'mapUp', 'holeInset': 0, 'fade': FADE,
+}, {
     'id': 'lc', 'type': 'hexlc', 'class': 'overlay', 'z': 0, 'x': 0, 'y': 0, 'w': W, 'h': H,
     'geo': GEO, 'k': K, 'band': BAND, 'inner': INNER, 'scale': SCALE, 'ticks': TICKS, 'rpmMax': RPM_MAX,
     'fuelSeg': FUEL_SEG, 'oilSeg': OIL_SEG, 'strip': [BOTTOM_END, 0, 0, 0], 'topEnd': TOP_END,

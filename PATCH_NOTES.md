@@ -175,3 +175,10 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   "holeOver" is the window while the map is drawn over the theme ("mapOver", waze.js over); BMW's map slot otherwise.
   The "mapfade" overlay is no longer used by it. hexlc: 8555 tokens.
 - bench/page.html ?mapover=x,y,w,h: a stand-in dark map in that rect.
+
+## Cluster Themes 0.24.2 — Live Cockpit Map: no empty black round the dash
+- A backdrop layer under the hexagon (new effect "lcbg", class ambient, 570 tokens): a deep blue-grey lifted in the
+  middle, the speed side washed blue and the rev side red from the brackets, a faint diagonal weave, light rails over
+  the top (y 46) and along the bottom (y 644), blue to white to red, fading at their ends, darker at the screen's very
+  edges. hexlc is now see-through round the hexagon (it was opaque near-black there). The strip a touch lighter.
+  See-through in the map's window like the hexagon's layer.

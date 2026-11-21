@@ -55,6 +55,9 @@
  *             "barH" bar height, "top" room for the marks above it, "slant" px, "over" rpm past the
  *             redline's thousand the scale runs to (1000: a 7000 redline gives 0..8)
  *   lights    effect layer; shaders.js lights, shift lights filling from "from" rpm (3000) up to the shift point
+ *   lcbg      effect layer, class ambient: Live Cockpit Map's backdrop round the hexagon (shaders.js lcbg): a lifted
+ *             blue-grey, blue / red washes from the brackets, a faint weave, light "rails" [top y, bottom y, half
+ *             length, brightness]; see-through in the map's window ("hole", "holeWhen", "fade").
  *   mapfade   effect layer, class overlay: over the map's window ("hole", "holeWhen": "mapUp"), the map's edges
  *             fading into the theme's colours round it ("edge": 6 roles or [r, g, b], see the code) over "fade"
  *             [l, t, r, b] px; nothing while
@@ -2192,6 +2195,11 @@ class HudApp {
             c.uniform(ref, 'u_road', w.road ? [w.road[0], w.road[1], 0, 1] : [0, 1, 0, 0]);
             // Live Cockpit Map: the map fades out over "fade" px a side (1 px each: a sharp edge, as before)
             if (w.type === 'hexlc') { c.uniform(ref, 'u_fade', w.fade || [1, 1, 1, 1]); c.uniform(ref, 'u_scrim', w.scrim || [0, 0, 0, 1]); }
+        } else if (w.type === 'lcbg') {
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_hole', this._hole(w));
+            c.uniform(ref, 'u_fade', w.fade || [1, 1, 1, 1]);
+            c.uniform(ref, 'u_rails', w.rails || [40, 640, 760, 0.8]);
         } else if (w.type === 'mapfade') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_hole', this._hole(w));
