@@ -1,14 +1,13 @@
 {
   "schema": 1,
-  "apps": {
-    "path": "apps/*",
-    "manifest": "app.json",
-    "mguHmi": ["ID7"],
-    "build": {
-      "python": "kit/tools/build.py",
-      "args": ["{id}"],
-      "sdk": "oap-sdk",
-      "output": "dist/{id}@{version}.tgz"
+  "components": [
+    {
+      "id": "cluster_themes", "kind": "app", "path": "apps/cluster_themes", "manifest": "app.json", "mguHmi": ["ID7"],
+      "build": { "python": "kit/tools/build.py", "args": ["{id}"], "sdk": "oap-sdk", "output": "dist/{id}@{version}.tgz" }
+    },
+    {
+      "id": "idrive_hud_widgets", "kind": "app", "path": "apps/idrive_hud_widgets", "manifest": "app.json", "mguHmi": ["ID7"],
+      "build": { "python": "kit/tools/build.py", "args": ["{id}"], "sdk": "oap-sdk", "output": "dist/{id}@{version}.tgz" }
     }
-  }
+  ]
 }

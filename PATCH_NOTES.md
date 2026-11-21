@@ -196,3 +196,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   numbers, the strip, the drive mode) in Inter, the closest open font to BMW Type Next.
 - The map is no longer cleared in a box: it fills the hexagon and is cut away only in an oval round the speed and
   round the gear (gone behind them, back above and below them), as on BMW's own map view. hexlc 8539 tokens.
+
+## Store catalog — no GitHub API needed to see updates
+- mgu-repo.json lists the two apps as "components" instead of the "apps/*" folder pattern: the Store lists a folder
+  pattern through GitHub's API (60 requests an hour per address without a sign-in; a phone hotspot's address is shared),
+  and when that limit refuses it the source keeps its old listing (mgu-updater sources.js repoEntries), which held the
+  car at Cluster Themes 0.23.1. Components are read from GitHub's web hosts only, which that limit does not count.
