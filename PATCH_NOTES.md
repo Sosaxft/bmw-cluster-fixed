@@ -122,3 +122,14 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - Gauges: marks at 0, 1/4, 1/2, 3/4 and full, the fuel reserve marked red; the range beside the fuel gauge, the oil
   temperature beside the oil gauge.
 - The shader sheds the unused road (8472 tokens, about what 0.21 had).
+
+## Cluster Themes 0.23.1 — works with Maps on cluster 0.11; no turn arrow
+- Maps on cluster 0.11 (waze-on-cluster 0.11.0, Nov 20 2026) dropped the "start panel" command the themes used: the map
+  now always goes on the cluster's own map slot, as with BMW's own Map view. waze.js reads its new status line (a
+  "cluster" field) and, with it, sends nothing: the theme's window opens while the map shows on the cluster, and the
+  map shows through it exactly where BMW's Map view puts it. Older versions are handled as before.
+  Needs, as with the stock cluster: Maps on cluster's Show on set to Cluster, and the car's Instrument cluster >
+  Central display area set to Map view.
+- The next-turn arrow on Live Cockpit Map is gone again (the map itself shows the road); its interfaces and setting
+  are out of Cluster Themes.
+- bench/fake-waze.js --v11 behaves as 0.11.

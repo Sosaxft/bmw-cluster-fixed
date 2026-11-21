@@ -431,17 +431,6 @@
       "colorBy": "mode"
     },
     {
-      "id": "nav",
-      "type": "nav",
-      "class": "overlay",
-      "z": 20,
-      "x": 810,
-      "y": 134,
-      "w": 300,
-      "h": 114,
-      "toggle": "!navDirections=off"
-    },
-    {
       "id": "speed",
       "type": "text",
       "z": 5,

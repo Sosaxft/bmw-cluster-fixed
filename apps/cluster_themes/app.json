@@ -2,7 +2,7 @@
   "id": "cluster_themes",
   "title": "Cluster Themes",
   "description": "Redraws the instrument cluster: GT3 race dash, M-style, M view, Vector (with a music panel), Sport, Minimal, Track, Drag, Rally, Retro 80s, Cruise, Dyno (BMW-coloured readout tiles) or Ribbon (with holiday editions), with shift lights, boost, temps, tyres, a G-meter and a 0-60 timer",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "CLU",
@@ -34,9 +34,7 @@
     "smart_temps.js",
     "hud_holiday.js",
     "garland.js",
-    "turn.js",
-    "nav.js",
-    "hud_nav.js"
+    "turn.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {
@@ -98,36 +96,6 @@
     "de.bmw.infrastructure.VehicleCondition": {
       "VehicleCondition": "s",
       "_optional": "the car switching off: no new layer while it does (cluster-render's switch-off guard)"
-    },
-    "de.bmw.infotainment.navigation.guiding.Guidance": {
-      "_optional": "directions on the cluster: the route state, BMW navigation's turns and lanes",
-      "_instances": "Main_Instance",
-      "guidanceState": "rs",
-      "guidingProvider": "rs",
-      "conclusiveDart": "rs",
-      "currentLaneGuiding": "rs"
-    },
-    "de.bmw.infotainment.navigation.guiding.GuidanceEventList": {
-      "_optional": "directions on the cluster: the phone's turns (CarPlay, Android Auto)",
-      "_instances": "Main_Instance",
-      "_methods": [
-        "queryContent"
-      ]
-    },
-    "de.bmw.infotainment.navigation.projectedmodeguiding.ProjectedModeGuiding": {
-      "_optional": "directions on the cluster: the phone's lanes",
-      "_instances": "Main_Instance",
-      "currentLaneGuiding": "rs"
-    },
-    "de.bmw.infotainment.a4a.carplay.CarPlayManager": {
-      "_optional": "directions on the cluster: whether CarPlay is guiding",
-      "_instances": "CarPlayManagerInst1",
-      "projectedGuidanceActive": "rs"
-    },
-    "de.bmw.infotainment.sdi.aap.androidautoprojectedmanager.AndroidAutoProjectedManager": {
-      "_optional": "directions on the cluster: whether Android Auto is guiding",
-      "_instances": "AndroidAutoProjectedManagerInst1",
-      "projectedGuidanceActive": "rs"
     }
   },
   "screens": [
@@ -451,26 +419,6 @@
       "label": "Show Waze map inside the theme",
       "type": "bool",
       "default": false
-    },
-    {
-      "key": "navDirections",
-      "label": "Next turn on the cluster (Live Cockpit Map)",
-      "type": "choice",
-      "default": "route",
-      "options": [
-        [
-          "route",
-          "While a route runs"
-        ],
-        [
-          "near",
-          "Near turns"
-        ],
-        [
-          "off",
-          "Off"
-        ]
-      ]
     },
     {
       "key": "units",

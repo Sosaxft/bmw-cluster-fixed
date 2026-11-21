@@ -67,9 +67,6 @@ widgets += [
     text('badge', 810, 48, 300, 25, '{{badge}}', 'u_cap', 'dim'),
     # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
     text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
-    # the next turn from CarPlay / BMW navigation (Redline's directions, shared/nav.js), at the top of the map
-    {'id': 'nav', 'type': 'nav', 'class': 'overlay', 'z': 20, 'x': 810, 'y': 134, 'w': 300, 'h': 114,
-     'toggle': '!navDirections=off'},
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
     text('speed', 385, 304, 240, 64, '{{speed}}', 'q_big', 'fg'),
     text('speed_unit', 455, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),

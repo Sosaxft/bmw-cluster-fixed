@@ -5,7 +5,8 @@
  * rename) and listens on <dir>/ctl.sock for its newline JSON commands, logging each one. Like the real control
  * socket it has one owner: with --busy N the first N connections get the "busy" status and are closed.
  *
- *   node bench/fake-waze.js bench/.data/waze [--state showing|idle] [--target map|panel] [--busy N]
+ *   node bench/fake-waze.js bench/.data/waze [--state showing|idle] [--target map|panel] [--busy N] [--v11]
+ *   --v11: as Maps on cluster 0.11 (the map always on "map", a "cluster": 1 field, no start command)
  *   kill -USR1 <pid>   flips the state between showing and idle (the phone's map coming and going)
  *   then run the bench with WAZE_STATUS=<dir>/status.json WAZE_CTL=<dir>/ctl.sock
  * Bench only; never on the car.
@@ -18,6 +19,7 @@ const args = process.argv.slice(2);
 const dir = path.resolve(args[0] || 'bench/.data/waze');
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > 0 ? args[i + 1] : d; };
 let state = opt('state', 'showing'), target = opt('target', 'map'), busyLeft = Number(opt('busy', 0));
+const v11 = args.indexOf('--v11') >= 0;
 const log = (s) => console.log(new Date().toISOString().slice(11, 19) + ' fake-waze: ' + s);
 
 fs.mkdirSync(dir, { recursive: true });
@@ -25,7 +27,8 @@ const sockPath = path.join(dir, 'ctl.sock'), statusPath = path.join(dir, 'status
 try { fs.unlinkSync(sockPath); } catch (e) { /* none */ }
 
 function writeStatus() {
-    const s = { state, target, page: state === 'showing' ? 'Waze map, 15 frames/s' : null, reason: state === 'idle' ? 'Waiting for the phone\'s map' : null };
+    const s = { state, target: v11 ? 'map' : target, page: state === 'showing' ? 'Waze map, 15 frames/s' : null, reason: state === 'idle' ? 'Waiting for the phone\'s map' : null };
+    if (v11) s.cluster = 1;
     fs.writeFileSync(statusPath + '.tmp', JSON.stringify(s) + '\n', { mode: 0o644 });
     fs.renameSync(statusPath + '.tmp', statusPath);
 }

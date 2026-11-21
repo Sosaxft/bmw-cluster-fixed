@@ -21,6 +21,13 @@
  * Never sent: "cluster" (would turn the map off), "guide" (saved by the tool). Never touched: patch.sock (root).
  * Facts from the waze-on-cluster 0.9.3 source (main.cpp, control.cpp, map_feed.cpp, the .socket unit), read
  * Nov 7 2026. Plain Node 8 (the car's 8.16.2).
+ *
+ * Maps on cluster 0.11 (waze-on-cluster 0.11.0, Nov 20 2026; main.cpp, map_feed.cpp, control.cpp read Nov 21) has no
+ * "start" command and no "panel" target any more: the map always goes on the cluster's own map slot ("map", 1088x480
+ * at 416,120 of the panel, under BMW's gauges), where the theme's see-through window shows it, exactly as BMW's own
+ * Map view would. Its status line says so with a "cluster" field (1: Show on includes the cluster). With that field
+ * this sends nothing: the map is up while state is "showing", target "map" and cluster 1. (Hosting it in our own scene
+ * instead needs a RAMSES scene file, off on every car as cluster-render ships.)
  */
 const fs = require('fs');
 const net = require('net');
@@ -83,6 +90,14 @@ class Waze {
         if (s.state === 'unsupported') return { text: 'Waze on Cluster: this car isn\'t supported', up: false, ok: false };
         if (s.state === 'off') return { text: 'Waze map is turned off in the Waze app', up: false, ok: false };
         if (!this.wanted) return { text: 'Off. Waze shows the map in BMW\'s own map view', up: false, ok: true };
+        if (s.v11) {
+            // Maps on cluster 0.11+: the map on the cluster's own map slot, seen through the theme's window
+            if (!s.cluster) return { text: 'Maps on cluster: set Show on to Cluster', up: false, ok: false };
+            if (s.state === 'showing') return { text: 'Map showing in the theme', up: true, ok: true };
+            if (s.state === 'frozen') return { text: 'Map frozen, waiting for the phone', up: false, ok: false };
+            if (s.state === 'error') return { text: 'Maps on cluster reports an error', up: false, ok: false };
+            return { text: 'Waiting for the phone\'s map (Central display area: Map view)', up: false, ok: true };
+        }
         if (s.target !== 'panel') {
             if (this.problem === 'busy') return { text: 'Waze app is open, retrying', up: false, ok: false };
             if (this.problem) return { text: 'Can\'t reach Waze on Cluster (' + this.problem + ')', up: false, ok: false };
@@ -99,7 +114,7 @@ class Waze {
             if (err || Date.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
                 let s = null;
-                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target) }; } } catch (x) { s = null; }
+                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), v11: 'cluster' in j, cluster: j.cluster !== 0 && j.cluster !== '0' }; } } catch (x) { s = null; }
                 this._update(s);
             });
         });
@@ -107,9 +122,9 @@ class Waze {
 
     _update(s) {
         this.st = s;
-        if (s && s.target === 'map' && !this.wanted && this.moved) this._setMoved(false);   // it's back
+        if (s && s.target === 'map' && this.moved && (!this.wanted || s.v11)) this._setMoved(false);   // it's back (0.11: always)
         if (s && s.target === 'panel' && this.problem) this.problem = null;
-        const up = !!(this.wanted && s && s.target === 'panel' && s.state === 'showing');
+        const up = !!(this.wanted && s && s.state === 'showing' && (s.v11 ? s.cluster && (s.target === 'map' || s.target === 'panel') : s.target === 'panel'));
         const text = this.info().text;
         const changed = up !== this.up || text !== this.lastText;
         this.up = up;
@@ -121,7 +136,7 @@ class Waze {
     _sync() {
         const s = this.st;
         if (this.sending || Date.now() < this.nextTry || !s) return;
-        if (s.state === 'unsupported' || s.state === 'off') return;
+        if (s.state === 'unsupported' || s.state === 'off' || s.v11) return;   // 0.11+: nothing to ask for
         if (this.wanted && s.target !== 'panel') this._send('panel');
         else if (!this.wanted && this.moved && s.target === 'panel') this._send('map');
     }
