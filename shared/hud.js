@@ -104,6 +104,8 @@
  *   hexlc     effect layer; the Live Cockpit Map theme (shaders.js hexlc, layout made by tools/gen_lcmap.py): hexdash's
  *             keys and hexagon map cut, blue speed / red rev brackets with bold outer lines, the fuel / oil bars kept
  *             up over the map; "strip"[0] is where the bottom runs end (nothing else of "strip" is used).
+ *   turn      effect layer; the HUD's turn-signal arrows (shared/turn.js; added by hud.js itself, TURN_WIDGET): an
+ *             arrow at each end of the rect in "color" while that side flashes, nothing otherwise.
  *   segbar    effect layer; "max" segments, the first round(signal) lit (e.g. "setupLevel:engine"), "slant" px
  *   icon      image layer; a line icon from icons.js ("icon": gauge, shock, wheel, cog, stack, therm, oilcan, fuel)
  *   arc also takes "start" and "sweep" in degrees (clockwise from 12 o'clock; negative = anticlockwise)
@@ -273,6 +275,7 @@ const sun = require('./sun');
 const textRaster = require('./hud_text');
 const { paintIcon } = require('./icons');
 const shaders = require('./shaders');
+const { TurnSignal } = require('./turn');
 const calibration = require('./calibration');
 const Car = require('./kit/car');
 const Waze = require('./waze');
@@ -352,7 +355,13 @@ const TILE_MAX = 14;       // half a flash: red, then the normal colour
 const MVIEW_RPM = 8000;            // the M view theme's rev scale: 0..8
 const MVIEW_SPEED = { us: 200, metric: 330 };
 const VDASH_RPM = 8000;            // the Vector theme's rev counter: 0..8
-const MEDIA_IF = 'de.bmw.infotainment.hmi.hmimediastate.HmiMediaState';   // the head unit's now playing (front)
+const MEDIA_IF = 'de.bmw.infotainment.hmi.hmimediastate.HmiMediaState';
+// the HUD's turn-signal arrows (setting showTurn, HUD Widgets only): added to every HUD layout but the calibration ones, in
+// the visible window's top corners (x 120..680, y 101..137: clear of BMW's speed and sign at the bottom left), on top of
+// everything and drawn only while a side flashes (shared/turn.js), so they cover a layout's corner just while signalling
+const TURN_IF = 'de.bmw.body.Light';
+const TURN_WIDGET = { id: 'turn_arrows', type: 'turn', class: 'overlay', z: 9, x: 120, y: 101, w: 560, h: 36, color: [64, 222, 96, 255] };
+   // the head unit's now playing (front)
 const MEDIA_TYPES = { 1: 'ARTIST', 2: 'ALBUM', 3: 'TITLE' };
 /** A song's text for the baked fonts: accents dropped, curly quotes and dashes made plain, the rest left out. */
 function mediaText(v) {
@@ -810,6 +819,10 @@ class HudApp {
         // now playing (the Vector layouts' music panel): the head unit's own media state, front screen only. Optional
         // (app.json): not every unit may have it, and whether CarPlay fills it is not known yet. Added last, so the
         // one-at-a-time SOME/IP setup (signals.js) reaches every vehicle signal before it, whatever this one does
+        // the turn signals and hazards (shared/turn.js), for the HUD's arrows; optional in app.json, so a unit without them
+        // installs and runs as before (kit/tools/build.py fit_to_unit) and the arrows just never light
+        this.turn = new TurnSignal(this.log);
+        if (this.target === 'hud') extra[TURN_IF] = { StatusFunctionsIndicators: (v) => this.turn.feed(v), StatusFunctionsIndicators2: (v) => this.turn.feed(v) };
         extra[MEDIA_IF] = {
             playerMetadata: (v) => this._mediaFeed('meta', v),
             trackProgress: (v) => this._mediaFeed('progress', v),
@@ -1912,6 +1925,8 @@ class HudApp {
         // Copies, since the strip row's connection is set below.
         const shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0))
             .map((w) => (w.stripRow ? Object.assign({}, w) : w));
+        if (this.target === 'hud' && this.setting('showTurn') !== false && !/calibration/i.test(layout.name || '')
+            && !shown.some((w) => ['grid', 'gridlabels', 'swatch', 'swatchimg'].indexOf(w.type) >= 0)) shown.push(Object.assign({}, TURN_WIDGET));
         this.shown = shown;              // for a scale to find its rev bar (driver camera wings)
         this._setNeeds(shown);
         // plan the layers first (a sheet's size is only known once every member is placed), then make them
@@ -2307,6 +2322,10 @@ class HudApp {
             c.uniform(ref, 'u_width', [w.width || 7]);
             c.uniform(ref, 'u_start', [(w.start === undefined ? 225 : w.start) * Math.PI / 180]);
             c.uniform(ref, 'u_sweep', [(w.sweep === undefined ? 270 : w.sweep) * Math.PI / 180]);
+        } else if (w.type === 'turn') {
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_on', rgba(color(t, w.color || 'fg')));
+            c.uniform(ref, 'u_lit', [0, 0]);
         } else if (w.type === 'segbar') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_segs', [w.max]);
@@ -2806,6 +2825,12 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [v]);
             x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
+        } else if (w.type === 'turn') {
+            const lit = this.turn ? this.turn.lit(Date.now()) : [0, 0];
+            const key = lit.join('');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_lit', lit);
         } else if (w.type === 'segbar') {
             const v = this._raw(w.signal);
             const lit = isNum(v) ? Math.max(0, Math.min(w.max, Math.round(v))) : 0;

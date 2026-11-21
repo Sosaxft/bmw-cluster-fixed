@@ -2084,4 +2084,49 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC };
+const TURN = `// HUD turn-signal arrows (hud.js widget type "turn", shared/turn.js): a filled arrow at each end of the layer, pointing
+// out, in u_on while that side's lamp is lit (u_lit) with a soft glow; nothing otherwise (black shows as nothing on the
+// HUD). GLSL ES 1.00, v_uv (0,0) is the top-left.
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec2 u_lit;       // left, right: 0 / 1
+uniform vec4 u_on;        // the arrows' colour
+
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+float sdTri(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
+    vec2 e0 = p1 - p0, e1 = p2 - p1, e2 = p0 - p2;
+    vec2 v0 = p - p0, v1 = p - p1, v2 = p - p2;
+    vec2 pq0 = v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0);
+    vec2 pq1 = v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0);
+    vec2 pq2 = v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0);
+    float s = sign(e0.x * e2.y - e0.y * e2.x);
+    vec2 d = min(min(vec2(dot(pq0, pq0), s * (v0.x * e0.y - v0.y * e0.x)),
+                     vec2(dot(pq1, pq1), s * (v1.x * e1.y - v1.y * e1.x))),
+                     vec2(dot(pq2, pq2), s * (v2.x * e2.y - v2.y * e2.x)));
+    return -sqrt(d.x) * sign(d.y);
+}
+float sdBox(vec2 p, vec2 b) { vec2 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0); }
+// an arrow pointing left, its tip at x 2, filling the layer's height with 2 px to spare: a head and a tail
+float arrow(vec2 q, float h) {
+    float a = h - 4.0, m = h * 0.5;
+    float head = sdTri(q, vec2(2.0, m), vec2(2.0 + 0.62 * a, 2.0), vec2(2.0 + 0.62 * a, 2.0 + a));
+    float tail = sdBox(q - vec2(2.0 + 0.86 * a, m), vec2(0.3 * a, 0.17 * a));
+    return min(head, tail);
+}
+
+void main() {
+    vec2 p = v_uv * u_size;
+    float h = u_size.y;
+    float dl = arrow(p, h), dr = arrow(vec2(u_size.x - p.x, p.y), h);
+    float fill = cov(dl) * u_lit.x + cov(dr) * u_lit.y;
+    float glow = exp(-max(dl, 0.0) / 4.0) * u_lit.x + exp(-max(dr, 0.0) / 4.0) * u_lit.y;
+    gl_FragColor = vec4(u_on.rgb, max(clamp(fill, 0.0, 1.0), 0.3 * clamp(glow, 0.0, 1.0)) * u_on.a);
+}
+`;
+
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN };

@@ -63,3 +63,14 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   (1 / 1/2 / 0, 300 / 210 / 120 °F), moved off the brackets.
 - No road: with no map up, the hexagon stays a dark night-map blue. The map itself comes from Maps on cluster
   (robertnisipeanu/idrive-apps): CarPlay's Apple Maps, Waze or Google Maps.
+
+## HUD Widgets 0.16.0 / Cluster Themes 0.21.2 — turn-signal arrows on the HUD, safer installs
+- HUD: green arrows in the top corners of the HUD's window flash with your turn signals (left, right) and with the
+  hazards (both), at BMW's rate; nothing shows while they're off. Setting "Turn-signal arrows" (on by default).
+  Read from de.bmw.body.Light StatusFunctionsIndicators (shared/turn.js), added to every HUD layout but the
+  calibration ones (hud.js TURN_WIDGET, shaders.js TURN).
+- Installs: kit/tools/build.py now has fit_to_unit (from cauliflowermossgrape/idrive7-apps): when the Store builds an
+  app on the head unit, anything the unit's own SOME/IP catalog lacks (an interface marked _optional, an instance, a
+  field) is left out instead of BMW refusing the whole app. A unit without the turn-signal interface installs as
+  before; the arrows just never light.
+- bench/run-app.js: manual `turn` (left / right / hazard / off) feeds the turn signals.

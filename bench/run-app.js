@@ -117,6 +117,9 @@ setInterval(() => {
         hu.feed(MS, 'trackProgress', { sink: 'FRONT', menuEntry: 1, trackId: 7, elapsed: Math.round(num('mediaElapsed', 0) * 1000),
             total: Math.round(num('mediaTotal', 0) * 1000), hasProgress: true, isSeekable: true });
     }
+    // turn signals / hazards (de.bmw.body.Light, shared/turn.js), only when the POST carries `turn`: left, right, hazard or off
+    if (typeof manual.turn === 'string') hu.feed('de.bmw.body.Light', 'StatusFunctionsIndicators', { activeFunctionIndicateDirection:
+        { left: 'DAUERBLINKEN_LINKS', right: 'DAUERBLINKEN_RECHTS', hazard: 'WARNBLINKEN_MANUELL' }[manual.turn] || 'BLINKEN_AUS' });
     // tyres (TPMS, the fields the car answers a read with): pressure in 0.1 bar, temperature raw - 40 C; the rear pair a notch higher
     const tp = Math.round(num('tyreP', 2.3) * 10), tt = Math.round(num('tyreT', 24) + 40);
     hu.feed('de.bmw.infotainment.vehicle.TPMS', 'statusTyrePressure', { actualValuePressureTyreFLH: tp, actualValuePressureTyreFRH: tp, actualValuePressureTyreRLH: tp + 2, actualValuePressureTyreRRH: tp + 2 });

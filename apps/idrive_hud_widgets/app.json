@@ -2,7 +2,7 @@
   "id": "idrive_hud_widgets",
   "title": "HUD Widgets",
   "description": "Gear, shift lights, boost, oil, coolant and intake temperatures, a G-meter, trip figures and the song playing on the windshield HUD, in Classic, M or Night themes",
-  "version": "0.15.2",
+  "version": "0.16.0",
   "vendor": "custom",
   "loggingId": "OAH1",
   "iconGlyph": "HUD",
@@ -35,7 +35,8 @@
     "shift_cue.js",
     "smart_temps.js",
     "hud_holiday.js",
-    "garland.js"
+    "garland.js",
+    "turn.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {
@@ -106,6 +107,11 @@
       "_optional": "directions on the HUD: whether Android Auto is guiding",
       "_instances": "AndroidAutoProjectedManagerInst1",
       "projectedGuidanceActive": "rs"
+    },
+    "de.bmw.body.Light": {
+      "StatusFunctionsIndicators": "s",
+      "StatusFunctionsIndicators2": "s",
+      "_optional": "turn-signal and hazard arrows on the HUD"
     },
     "de.bmw.infotainment.hmi.hmimediastate.HmiMediaState": {
       "_instances": "HMI_CID",
@@ -834,6 +840,12 @@
     {
       "key": "coldGuard",
       "label": "Cold-engine rev guard (Redline)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showTurn",
+      "label": "Turn-signal arrows",
       "type": "bool",
       "default": true
     },
