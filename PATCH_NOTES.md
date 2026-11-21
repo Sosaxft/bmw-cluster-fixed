@@ -74,3 +74,7 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   field) is left out instead of BMW refusing the whole app. A unit without the turn-signal interface installs as
   before; the arrows just never light.
 - bench/run-app.js: manual `turn` (left / right / hazard / off) feeds the turn signals.
+
+## HUD Widgets 0.16.1 — "Blinkers only" layout
+- New layout "Blinkers only" (first after Off in every layout list): adds nothing but the turn-signal / hazard arrows,
+  so BMW's own HUD stays exactly as it is with the arrows flashing in its top corners.

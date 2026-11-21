@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 2,
+  "name": "Blinkers only",
+  "_about": "Nothing but the turn-signal arrows: BMW's own HUD (speed, speed-limit sign, navigation) shows as normal, and a green arrow flashes in the top-left / top-right corner of the HUD with the left / right signal, both with the hazards. The arrows are the automatic turn widget (hud.js TURN_WIDGET, setting showTurn); this layout adds no widgets of its own.",
+  "widgets": []
+}
