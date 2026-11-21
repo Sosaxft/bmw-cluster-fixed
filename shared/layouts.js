@@ -31,7 +31,6 @@ const TYPES = {
     sdash: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
     hexdash: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
     hexlc: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
-    g80: ['rail', 'band', 'tab', 'v', 'lights'],
     mview: ['path', 'scale', 'dial', 'dialAng', 'line'],
     vdash: ['tach', 'segs'],
     mtach: ['side', 'y0', 'y8', 'ym', 'xm', 'kTop', 'kBot', 'wBot', 'wTop'],

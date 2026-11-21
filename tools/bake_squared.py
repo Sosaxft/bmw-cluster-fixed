@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Bake the G80 Map theme's lettering for Cluster Themes (apps/cluster_themes/hud/fonts/):
+"""Bake the Live Cockpit Map theme's lettering for Cluster Themes (apps/cluster_themes/hud/fonts/), Redline's HUD
+lettering (the G80 M3 / M4 look):
 
-  - g_*  squared digits, the G80 M3 / M4 HUD's look as Redline draws them (redline/hud-m.js sqGlyph: 7-segment
+  - q_*  squared digits, the G80 M3 / M4 HUD's look as Redline draws them (redline/hud-m.js sqGlyph: 7-segment
          strokes joined at the corners, 1.15 x as wide as tall, the stroke a quarter of the height, plus P R N D S M),
          drawn here 4x and scaled down, in bake_fonts.py's atlas format;
   - u_*  Ubuntu (Bold / Medium, Ubuntu Font Licence 1.0, tools/fonts-src/Ubuntu-UFL.txt), Redline's own text font.
@@ -93,16 +94,13 @@ def bake_sq(name, h, chars):
 
 DIG = '0123456789'
 SQUARED = [
-    ('g_gear', 112, DIG + 'PRNDSM-'),
-    ('g_speed', 84, DIG + '-'),
-    ('g_val', 52, DIG + '-.'),
-    ('g_scale', 38, DIG),
+    ('q_big', 60, DIG + 'PRNDSM-'),       # the speed and the gear
+    ('q_scale', 21, DIG),                 # the scale numbers
 ]
 UBUNTU = [
-    ('u_mode', 'Ubuntu-Bold.ttf', 50, 'DSM'),
-    ('u_label', 'Ubuntu-Medium.ttf', 28, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x '),
-    ('u_unit', 'Ubuntu-Bold.ttf', 34, B.UPPER + B.LOWER + '/°% '),
-    ('u_val', 'Ubuntu-Bold.ttf', 34, B.DIGITS + ':.-+° '),
+    ('u_small', 'Ubuntu-Medium.ttf', 25, B.DIGITS + '/.:-°% '),               # the gauges' numbers (1/2, temperatures)
+    ('u_cap', 'Ubuntu-Medium.ttf', 22, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x '),   # mph, 1/min x 1000, units, the badge
+    ('u_val', 'Ubuntu-Bold.ttf', 28, B.DIGITS + ':.-+° '),                    # the strip's clock, range, outside
 ]
 
 if __name__ == '__main__':

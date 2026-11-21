@@ -34,11 +34,11 @@ Besides its own code, the app ships with:
 4c. The Outfit typeface (hud.pack, fonts/b_*): pre-rendered glyphs of Outfit, Copyright 2021 The Outfit Project Authors
    (https://github.com/Outfitio/Outfit-Fonts), under the SIL Open Font License 1.1 (the same licence text as below).
 
-4d. The G80 Map theme (layout g80map.json, shaders.js g80): its rev rail, band, tabs, shift lights and squared
-   digits (fonts/g_*) follow the Redline app's G80 "Ramp" HUD (cauliflowermossgrape/idrive7-apps apps/redline,
-   hud-m.js), MIT, Copyright (c) 2026 cauliflowermossgrape. Its text (fonts/u_*): pre-rendered glyphs of Ubuntu
-   Bold / Medium, Copyright 2010-2011 Canonical Ltd., under the Ubuntu Font Licence 1.0
-   (https://ubuntu.com/legal/font-licence; the text is in the repository at tools/fonts-src/Ubuntu-UFL.txt).
+4d. The Live Cockpit Map theme's lettering follows the Redline app's G80-style HUD (cauliflowermossgrape/idrive7-apps
+   apps/redline, hud-m.js sqText), MIT, Copyright (c) 2026 cauliflowermossgrape: its squared digits redrawn
+   (fonts/q_*, tools/bake_squared.py), and pre-rendered glyphs of Ubuntu Medium / Bold (fonts/u_*), Copyright
+   2010-2011 Canonical Ltd., under the Ubuntu Font Licence 1.0 (https://ubuntu.com/legal/font-licence; the text is
+   in the repository at tools/fonts-src/Ubuntu-UFL.txt).
 
 5. The pixel-diff text update in hud.js (changes(): only the rectangle that changed goes up the link) is
    adapted from PenguinDukeYDAuto/idrive7-EVAHUD (shared/eva_canvas.js): MIT, Copyright (c) 2026 DukeAPenguin.
