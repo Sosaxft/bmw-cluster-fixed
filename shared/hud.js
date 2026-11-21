@@ -903,6 +903,7 @@ class HudApp {
         });
         c.on('budget', (capKb, maxKb, reason) => this.log.info('budget' + tag + ' ' + capKb + '/' + maxKb + ' kb/s (' + reason + ')'));
         c.on('status', (text) => {
+            if (ci === 0) { this.crStatus = String(text); this.crStatusAt = Date.now(); }
             this.log.info('cluster-render status: ' + text);
             this._stallsFromStatus(text);
             const ids = sceneIdsOf(text);
@@ -1273,7 +1274,7 @@ class HudApp {
     _status() {
         // the Waze map's state rides along while that setting is on (and redraws the page's Map tab when it changes)
         const s = this.statusText() + (this.waze && this.setting('mapInTheme') === true ? '; Waze: ' + this.waze.info().text : '');
-        const d = this.modeDiagLines().join('\n');
+        const d = this.modeDiagLines().concat(this.clusterDiagLines()).join('\n');
         if (s === this.lastStatus && d === this.lastDiag) return;
         this.lastStatus = s; this.lastDiag = d;
         this.statusListeners.forEach((fn) => { try { fn(s); } catch (e) { this.log.warn('status listener: ' + e); } });
@@ -1319,6 +1320,26 @@ class HudApp {
      * The drive mode check's lines for the Settings tab (one per signal), [] while byMode is off. names: the
      * candidates the app listens to (its app.json; main.js gives them to the page), so none shows "--" for ever.
      */
+    /**
+     * Setting "clusterDiag": what cluster-render says the KOMBI's slots hold (its status text: the targets, each slot's
+     * content, the guide hold, the budget), asked for every 3 s, for a photo with a theme on and off (the black boxes over
+     * the map, Nov 21 2026). Layer lines are left out. Never throws.
+     */
+    clusterDiagLines() {
+        if (this.setting('clusterDiag') !== true) {
+            if (this._diagT) { clearInterval(this._diagT); this._diagT = null; }
+            return [];
+        }
+        if (!this._diagT) {
+            this._diagT = setInterval(() => this._guard('diag', () => { if (this.client.ready) this.client.status(); this._status(); }), 3000);
+            if (this.client.ready) this.client.status();
+        }
+        const age = this.crStatusAt ? Math.round((Date.now() - this.crStatusAt) / 1000) + ' s ago' : 'not yet';
+        const lines = String(this.crStatus || '').split('\n').map((l) => l.trim())
+            .filter((l) => l && !/^layer \d/.test(l));
+        return ['cluster-render status (' + age + '), theme ' + (this.activeName || '--') + ':'].concat(lines.slice(0, 22));
+    }
+
     modeDiagLines(names) {
         if (this.setting('byMode') !== true) return [];
         return (names || ['HMI', 'MDrive', 'Engine', 'Sport2']).map((n, i) => (i ? '' : 'Drive mode check: ') + n + '  ' + (this.modeDiag[n] || '--'));

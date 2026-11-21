@@ -148,3 +148,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   limit for an image layer), the rev smoothing 60 -> 35 ms. CPU on the bench unchanged.
 - Live Cockpit Map: 0.23.2's cards over BMW's map-view boxes are gone again (they only hid the boxes); the clock is
   back in the strip, the drive mode back over the hexagon. The dark-map tone stays.
+
+## Cluster Themes 0.23.4 — cluster diagnostics
+- Setting "Cluster diagnostics" (Settings tab): while on, the tab shows cluster-render's own status, asked for every
+  3 s: the targets, what each of the KOMBI's slots holds, the guide hold, the budget (layer lines left out), to
+  photograph with a theme on and with it off. For the black boxes over the map that show only while a theme is on
+  (Nov 21 2026). shared/hud.js clusterDiagLines, page.js settingsTab.

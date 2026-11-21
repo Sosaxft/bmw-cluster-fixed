@@ -603,6 +603,18 @@ class Page {
     /* ---------- Settings ---------- */
     settingsTab(cv, bottom) {
         label(cv, CX, 70, 'Settings');
+        // the cluster diagnostics (hud.js clusterDiagLines): their switch, then cluster-render's slot report, full width
+        const cd = this.item('clusterDiag') && this.hud.clusterDiagLines ? this.hud.clusterDiagLines() : [];
+        if (cd.length) {
+            this.toggleRow(cv, CX, 84, (CW - 24) / 2, this.item('clusterDiag').label, 'clusterDiag', 46);
+            cd.forEach((t, i) => {
+                const y = 152 + 17 * i;
+                if (y > bottom - 8) return;
+                while (t.length > 8 && cv.textWidth(t, 14, { literal: true }) > CW) t = t.slice(0, -1);
+                cv.text(t, CX, y, 14, i ? C.label : C.text, { literal: true });
+            });
+            return;
+        }
         const keys = this.cfg.settings.filter((k) => this.item(k));
         const colW = (CW - 24) / 2, per = Math.ceil(keys.length / 2);
         // issue #8: the drive mode check (raw signal values, only the signals this app listens to: cfg.modeCheck)
