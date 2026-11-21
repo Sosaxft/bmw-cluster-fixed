@@ -39,3 +39,10 @@ After BMW's Live Cockpit Sport view with the map in the middle. Pick **Hex Map**
   re-tune; it refuses to write a layout with overlapping parts), preview picture for the theme picker.
 - Reverted the 0.19.2 mview "center cover": it was based on a misread of the mview geometry and would have
   blocked a strip of mview's map window. mview is back to exactly the original.
+
+## 0.20.1 — less delay, Hex Map restyle
+- Less delay on every theme: speed, gear, revs and boost redraw every 100 ms (was 200 ms), and the rev counter's
+  smoothing is 60 ms (was 120 ms). Other readouts stay at 200 ms.
+- Hex Map: clean Outfit lettering (new h_* fonts, nothing else's fonts changed), black backdrop with the orange glow
+  only along the inner edges and on the lit part (the car brightens dark reds, so no dark-red slabs), thinner white
+  lines, a road of lines only, and a wider hexagon filling BMW's whole map window with speed / gear at the edges.

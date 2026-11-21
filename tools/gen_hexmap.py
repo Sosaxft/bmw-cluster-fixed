@@ -22,8 +22,8 @@ MAP = [416, 120, 1088, 480]  # BMW's map window, where waze-on-cluster draws (ma
 
 # the left bracket's outer line (the right one is its mirror)
 Y_TOP, Y_BEND, Y_BOT = 110, 330, 604
-X_BEND, ROUND = 500, 40
-X_TOP, X_BOTC = 640, 620     # where the outer line meets the top run / the bottom run
+X_BEND, ROUND = 400, 40
+X_TOP, X_BOTC = 545, 525     # the hexagon as wide as BMW's map window allows (the map must stay inside it)     # where the outer line meets the top run / the bottom run
 BAND, INNER = 40, 59
 SCALE = [594, 150]           # y of the 0 mark, y of the top mark
 TICKS = [8, 7]               # speed marks (SPEED_SCALE: 9 labels), rpm marks (0..7)
@@ -63,51 +63,51 @@ widgets.append({
     'geo': [Y_TOP, Y_BEND, Y_BOT, X_BEND], 'k': [r(K_TOP), r(K_BOT), ROUND], 'band': BAND, 'inner': INNER,
     'scale': SCALE, 'ticks': TICKS, 'rpmMax': RPM_MAX,
     # fuel under the speed (fills to the right), oil temperature under the gear (fills to the left)
-    'fuelSeg': [380, 430, 210, 430], 'oilSeg': [1540, 430, 1710, 430],
-    'strip': [90, 488, 2, 132], 'topEnd': TOP_END, 'road': [Y_BEND, 1.4],
+    'fuelSeg': [250, 436, 80, 436], 'oilSeg': [1670, 436, 1840, 436],
+    'strip': [30, 492, 2, 140], 'topEnd': TOP_END, 'road': [Y_BEND, 1.4],
     'hole': MAP, 'holeWhen': 'mapUp', 'holeRadius': HOLE_INS,
 })
 
 # scale numbers just outside the outer line
 for i in range(TICKS[0] + 1):
     y = SCALE[0] - i / TICKS[0] * (SCALE[0] - SCALE[1])
-    xr = outer_x(y) - 16
-    widgets.append(text('spd%d' % i, xr - 104, y - 14, 104, 27, '{{spd:%d}}' % i, 's_scale', 'hscale', 'right',
+    xr = outer_x(y) - 14
+    widgets.append(text('spd%d' % i, xr - 80, y - 11, 80, 23, '{{spd:%d}}' % i, 'h_scale', 'hscale', 'right',
                         near=['speed', i], nearColor='horange'))
 for i in range(TICKS[1] + 1):
     y = SCALE[0] - i / TICKS[1] * (SCALE[0] - SCALE[1])
-    xl = W - outer_x(y) + 16
-    widgets.append(text('rpm%d' % i, xl, y - 14, 60, 27, str(i), 's_scale', 'hscale', 'left',
+    xl = W - outer_x(y) + 14
+    widgets.append(text('rpm%d' % i, xl, y - 11, 44, 23, str(i), 'h_scale', 'hscale', 'left',
                         near=['rpm', i], nearColor='horange'))
 
 widgets += [
-    text('badge', 810, 72, 300, 29, '{{badge}}', 's_unit', 'dim'),
+    text('badge', 810, 72, 300, 26, '{{badge}}', 'h_unit', 'dim'),
     # left: speed, unit, fuel bar (shader) with its icon, range
-    text('speed', 146, 284, 232, 68, '{{speed}}', 's_speed', 'fg'),
-    text('speed_unit', 212, 354, 100, 29, '{{u:speedLc}}', 's_unit', 'dim'),
-    {'id': 'fuel_icon', 'type': 'icon', 'icon': 'fuel', 'z': 5, 'x': 172, 'y': 417, 'w': 22, 'h': 26, 'color': 'dim'},
-    text('range', 214, 448, 110, 26, '{{range}}', 's_val', 'fg', 'right'),
-    text('range_u', 330, 446, 40, 29, '{{u:distLc}}', 's_unit', 'dim', 'left'),
-    # right: gear (BMW's own S2 / D3 / P), drive mode, oil bar (shader) with its icon, oil temperature
-    text('gear', 1510, 284, 240, 65, '{{gear}}', 's_gear', 'fg', hotWhen='now'),
-    text('mode', 1505, 354, 250, 29, '{{mode}}', 's_label', 'dim'),
-    {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilcan', 'z': 5, 'x': 1722, 'y': 419, 'w': 34, 'h': 22, 'color': 'dim'},
-    text('oil', 1550, 448, 100, 26, '{{oil}}', 's_val', 'fg', 'right'),
-    text('oil_unit', 1656, 446, 40, 29, '{{u:temp}}', 's_unit', 'dim', 'left'),
-    {'id': 'mstripe', 'type': 'stripe', 'z': 5, 'x': 1590, 'y': 520, 'w': 120, 'h': 22},
-    # under the hexagon (between its bottom line and the warning lights), as the Sport theme
-    text('boost', 680, 620, 160, 26, '{{boost}}', 's_val', 'fg', 'right', toggle='showBoost'),
-    text('boost_unit', 846, 618, 60, 29, '{{u:boost}}', 's_unit', 'dim', 'left', toggle='showBoost'),
-    {'id': 'therm', 'type': 'icon', 'icon': 'therm', 'z': 5, 'x': 998, 'y': 618, 'w': 24, 'h': 30, 'color': 'dim'},
-    text('coolant', 1026, 620, 90, 26, '{{coolant}}', 's_val', 'fg', 'right'),
-    text('coolant_unit', 1122, 618, 50, 29, '{{u:temp}}', 's_unit', 'dim', 'left'),
-    # the bottom strip, exactly as the Sport theme (BMW's gear letter shows in the gap x 1380..1460)
+    text('speed', 40, 288, 240, 68, '{{speed}}', 'h_speed', 'fg'),
+    text('speed_unit', 110, 360, 100, 26, '{{u:speedLc}}', 'h_unit', 'dim'),
+    {'id': 'fuel_icon', 'type': 'icon', 'icon': 'fuel', 'z': 5, 'x': 42, 'y': 423, 'w': 22, 'h': 26, 'color': 'dim'},
+    text('range', 70, 457, 100, 25, '{{range}}', 'h_val', 'fg', 'right'),
+    text('range_u', 176, 457, 40, 26, '{{u:distLc}}', 'h_unit', 'dim', 'left'),
+    # right: gear (S2 / D3 / P), drive mode, oil bar (shader) with its icon, oil temperature
+    text('gear', 1640, 290, 240, 64, '{{gear}}', 'h_gear', 'fg', hotWhen='now'),
+    text('mode', 1640, 362, 250, 22, '{{mode}}', 'h_label', 'dim'),
+    {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilcan', 'z': 5, 'x': 1850, 'y': 425, 'w': 34, 'h': 22, 'color': 'dim'},
+    text('oil', 1690, 457, 100, 25, '{{oil}}', 'h_val', 'fg', 'right'),
+    text('oil_unit', 1796, 457, 40, 26, '{{u:temp}}', 'h_unit', 'dim', 'left'),
+    {'id': 'mstripe', 'type': 'stripe', 'z': 5, 'x': 1705, 'y': 520, 'w': 120, 'h': 22},
+    # under the hexagon (between its bottom line and the warning lights)
+    text('boost', 700, 622, 140, 25, '{{boost}}', 'h_val', 'fg', 'right', toggle='showBoost'),
+    text('boost_unit', 846, 622, 60, 26, '{{u:boost}}', 'h_unit', 'dim', 'left', toggle='showBoost'),
+    {'id': 'therm', 'type': 'icon', 'icon': 'therm', 'z': 5, 'x': 990, 'y': 618, 'w': 24, 'h': 30, 'color': 'dim'},
+    text('coolant', 1018, 622, 90, 25, '{{coolant}}', 'h_val', 'fg', 'right'),
+    text('coolant_unit', 1114, 622, 50, 26, '{{u:temp}}', 'h_unit', 'dim', 'left'),
+    # the bottom strip, as the Sport theme (BMW's gear letter shows in the gap x 1380..1460)
     {'id': 'strip_cover_l', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 0, 'y': 660, 'w': 1380, 'h': 60, 'color': 'bg', 'stripRow': 'l'},
     {'id': 'strip_cover_r', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 1460, 'y': 660, 'w': 460, 'h': 60, 'color': 'bg', 'stripRow': 'r'},
-    text('strip_time', 144, 678, 124, 26, '{{time}}', 's_val', 'fg', 'right', stripRow='l'),
-    text('strip_ampm', 274, 676, 35, 29, '{{ampmLc}}', 's_unit', 'dim', 'left', stripRow='l'),
-    text('strip_out', 1676, 678, 80, 26, '{{ambient}}', 's_val', 'fg', 'right', stripRow='r'),
-    text('strip_out_u', 1762, 676, 27, 29, '{{u:temp}}', 's_unit', 'dim', 'left', stripRow='r'),
+    text('strip_time', 144, 680, 124, 25, '{{time}}', 'h_val', 'fg', 'right', stripRow='l'),
+    text('strip_ampm', 274, 679, 35, 26, '{{ampmLc}}', 'h_unit', 'dim', 'left', stripRow='l'),
+    text('strip_out', 1676, 680, 80, 25, '{{ambient}}', 'h_val', 'fg', 'right', stripRow='r'),
+    text('strip_out_u', 1762, 679, 27, 26, '{{u:temp}}', 'h_unit', 'dim', 'left', stripRow='r'),
 ]
 
 layout = {

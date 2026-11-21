@@ -100,6 +100,13 @@ CLUSTER_FONTS = [
     # Cruise: calm, light numbers
     ('c_speed', 'BarlowSemiCondensed-Medium.ttf', 150, DIGITS + '-'),
     ('c_val', 'BarlowSemiCondensed-Medium.ttf', 62, DIGITS + '.:-+°'),
+    # Hex Map: Outfit (SIL OFL), clean like BMW's own cluster lettering (Nov 20 2026)
+    ('h_speed', 'Outfit[wght].ttf', 88, DIGITS + '-', 0, 'Medium'),
+    ('h_gear', 'Outfit[wght].ttf', 84, 'PRNDSM-' + DIGITS, 0, 'Medium'),
+    ('h_scale', 'Outfit[wght].ttf', 26, DIGITS, 0, 'Regular'),
+    ('h_val', 'Outfit[wght].ttf', 30, DIGITS + ':+-.', 0, 'Regular'),
+    ('h_unit', 'Outfit[wght].ttf', 22, LOWER + UPPER + DIGITS + '°/-. ', 0, 'Regular'),
+    ('h_label', 'Outfit[wght].ttf', 24, UPPER + DIGITS + ' .', 0, 'Medium'),
     # Ribbon: Outfit (SIL OFL), thin and calm: the huge speed, the side readouts, small spaced labels
     ('b_speed', 'Outfit[wght].ttf', 250, DIGITS + '-', 0, 'ExtraLight'),
     ('b_val', 'Outfit[wght].ttf', 44, DIGITS + '.:-+°% ' + LOWER + UPPER, 0, 'Light'),

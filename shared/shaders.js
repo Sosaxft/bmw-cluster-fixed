@@ -1774,8 +1774,8 @@ uniform float u_topEnd;   // the top and bottom runs go from the bracket to this
 uniform vec4 u_road;      // the road in the hexagon: horizon y, px scale, dash phase 0..1, on
 
 const vec3 LINE = vec3(0.97, 0.95, 0.92);
-const vec3 BAND = vec3(0.26, 0.05, 0.03);
-const vec3 GLOW = vec3(0.62, 0.14, 0.04);
+const vec3 BAND = vec3(0.0, 0.0, 0.0);      // unlit: black (the car brightens dark tints, so no dark red slabs)
+const vec3 GLOW = vec3(0.75, 0.16, 0.04);    // a thin glow along the inner edge only
 const vec3 LIT_LO = vec3(0.9, 0.12, 0.05);
 const vec3 LIT_HI = vec3(1.0, 0.56, 0.12);
 const vec3 INNER = vec3(1.0, 0.45, 0.12);
@@ -1820,10 +1820,12 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec4 c
     float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - 5.0 - u_w);
     if (inB > 0.0) {
         float f = clamp((d - 5.0) / u_w, 0.0, 1.0);
-        vec3 col = mix(BAND, GLOW, f * f);
+        vec3 col = mix(BAND, GLOW, smoothstep(0.62, 1.0, f) * 0.85);
         if (t <= val) {
+            // lit: dark at the outer line, bright at the inner edge (a glow, not a slab), red low on the scale to orange high
             vec3 lit = mix(LIT_LO, LIT_HI, clamp(t, 0.0, 1.0));
-            col = mix(lit, mix(lit, vec3(1.0, 0.92, 0.8), 0.3), f) * mix(0.8, 1.0, clamp(t / max(val, 0.01), 0.0, 1.0));
+            col = lit * mix(0.28, 1.0, smoothstep(0.0, 1.0, f));
+            col = mix(col, vec3(1.0, 0.9, 0.75), smoothstep(0.88, 1.0, f) * 0.45);
         }
         c = over(vec4(col, 0.96 * inB), c);
         float yv = u_scale.x - val * (u_scale.x - u_scale.y);
@@ -1839,11 +1841,11 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec4 c
         }
     }
     // the outer line, its top run and its bottom run (both to the middle: the hexagon is closed)
-    float o = inY || abs(q.y - u_geo.x) < 6.0 || abs(q.y - u_geo.z) < 6.0 ? cov(abs(d - 1.0) - 1.8) : 0.0;
+    float o = inY || abs(q.y - u_geo.x) < 6.0 || abs(q.y - u_geo.z) < 6.0 ? cov(abs(d - 1.0) - 1.3) : 0.0;
     vec2 tl = vec2(outerX(u_geo.x), u_geo.x), bl = vec2(outerX(u_geo.z), u_geo.z);
-    o = max(o, cov(segD(q, tl, vec2(u_topEnd, u_geo.x)) - 2.2));
-    o = max(o, cov(segD(q, bl, vec2(u_topEnd, u_geo.z)) - 2.2));
-    c = over(vec4(1.0, 0.45, 0.15, 0.3 * exp(-abs(d) / 6.0) * (inY ? 1.0 : 0.0) * step(d, 0.0)), c);
+    o = max(o, cov(segD(q, tl, vec2(u_topEnd, u_geo.x)) - 1.6));
+    o = max(o, cov(segD(q, bl, vec2(u_topEnd, u_geo.z)) - 1.6));
+    c = over(vec4(1.0, 0.45, 0.15, 0.16 * exp(-abs(d) / 6.0) * (inY ? 1.0 : 0.0) * step(d, 0.0)), c);
     c = over(vec4(LINE, o), c);
     // the inner line, with its own top and bottom runs
     float il = (q.y > yTopI && q.y < yBotI) ? cov(abs(d - u_inner) - 1.6) : 0.0;
@@ -1851,7 +1853,7 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec4 c
     float xb = outerX(yBotI) + u_inner * sqrt(1.0 + outerSlope(yBotI) * outerSlope(yBotI));
     il = max(il, cov(segD(q, vec2(xt, yTopI), vec2(u_topEnd, yTopI)) - 1.6));
     il = max(il, cov(segD(q, vec2(xb, yBotI), vec2(u_topEnd, yBotI)) - 1.6));
-    c = over(vec4(INNER, 0.95 * il), c);
+    c = over(vec4(INNER, 0.85 * il), c);
     return c;
 }
 
@@ -1887,18 +1889,17 @@ void main() {
         float k = min(hx, -max(qq.x, qq.y));
         c.a *= clamp(0.5 - k, 0.0, 1.0);
     } else if (u_road.w > 0.5 && p.y > u_road.x + 1.0 && hx > -1.0) {
-        // the road while no map shows: a dark red surface, solid edge lines and dashed lane lines in perspective from
+        // the road while no map shows: solid edge lines and dashed lane lines in perspective (no surface fill) from
         // the horizon down, kept inside the hexagon; the dashes run towards the driver with the speed (u_road.z)
         float dy = p.y - u_road.x;
         float xw = (p.x - u_size.x * 0.5) * u_road.y / dy;
         float px = dy / u_road.y;
         float fade = smoothstep(0.0, 70.0, dy) * clamp(hx + 0.5, 0.0, 1.0);
-        c = over(vec4(0.7, 0.18, 0.05, 0.42 * fade * cov((abs(xw) - 1.75) * px) * mix(0.55, 1.0, dy / (u_geo.z - u_road.x))), c);
         float hw = 1.2 + dy * 0.012;
         float edge = cov(abs(abs(xw) - 1.5) * px - hw);
         float dash = step(fract(u_road.y * 120.0 / dy + u_road.z), 0.5);
         float lane = cov(abs(abs(xw) - 0.5) * px - hw) * dash;
-        c = over(vec4(1.0, 0.86, 0.72, fade * max(edge, lane)), c);
+        c = over(vec4(1.0, 0.86, 0.72, 0.7 * fade * max(edge, lane)), c);
     }
     c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
     c = bar(p, u_oilSeg, u_oil, 1.0, c);

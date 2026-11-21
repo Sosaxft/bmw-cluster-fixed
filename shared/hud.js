@@ -221,7 +221,7 @@
  * Text "colorBy": "verdict" colours it by the last shift's grade. Text "near": ["speed" | "rpm", i] turns it
  * "nearColor" (fg) while scale label i is the one nearest the value (BMW lights up the label by the needle).
  *
- * rpm is smoothed (a 120 ms filter, and the readout moves in 50 rpm steps only when it changes by 40 or
+ * rpm is smoothed (a 60 ms filter, and the readout moves in 50 rpm steps only when it changes by 40 or
  * more), so idle wobble doesn't show, as on BMW's own tach. Shift scoring uses the raw rpm.
  * Boost: FES displayBoostPressure while it's valid, else (app.json config.dme) the engine unit over
  * read-only UDS, absolute pressure minus outside air pressure, as cauliflowermossgrape's car_vitals does.
@@ -306,6 +306,12 @@ const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for eve
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const TICK_MS = 50;              // 20 Hz: shift bar and gauges
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
+// the readouts that move while driving (speed, gear, revs, boost) re-draw twice as often, so they don't trail the car;
+// each change still sends only its changed rect (a digit or two), well inside the upload budget
+const LIVE_TEXT_MS = 100;
+const LIVE_TOKENS = /\{\{(speed|speed2|rpm|rpm10|gear|gearnum|gearInD|stage|boost)\}\}/;
+// the rev counter's smoothing (BMW-like, hides idle wobble): 60 ms, was 120 ms (felt late on the car, Nov 20 2026)
+const RPM_TAU_MS = 60;
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
 const MODE_KEY = { comfort: 'inComfort', sport: 'inSport', eco: 'inEco' };
 const TYRE_CORNERS = ['FL', 'FR', 'RL', 'RR'];
@@ -2544,21 +2550,21 @@ class HudApp {
         return this.tripMs >= 60000 ? this.tripKm / (this.tripMs / 3600000) : null;
     }
 
-    /** BMW-like tach: a 120 ms filter, and a readout that moves in 50 rpm steps, only by 40 rpm or more. */
+    /** BMW-like tach: a RPM_TAU_MS (60 ms) filter, and a readout that moves in 50 rpm steps, only by 40 rpm or more. */
     _smoothRpm(now) {
         const test = this._testRpm(now);
         const raw = isNum(test) ? test : this.car.data().rpm;
         const dt = this.lastTickT ? Math.min(500, now - this.lastTickT) : 0;
         this.lastTickT = now;
         if (!isNum(raw)) { this.rpmF = null; this.rpmShown = null; return; }
-        this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / 120)) : raw;
+        this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / RPM_TAU_MS)) : raw;
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
     }
 
     _update(x, now, force) {
         const w = x.w;
         if (w.type === 'atext') {
-            if (!force && now - x.lastPaint < (w.rate || TEXT_MS)) return;
+            if (!force && now - x.lastPaint < (w.rate || (LIVE_TOKENS.test(w.text) ? LIVE_TEXT_MS : TEXT_MS))) return;
             const s = this._resolve(w.text);
             if (!force && s === x.last) return;
             x.last = s; x.lastPaint = now;
@@ -2566,7 +2572,7 @@ class HudApp {
         } else if (w.type === 'nav') this._navUpdate(x, now, force);
         else if (w.type === 'garland') this._garlandTick(x, now);
         else if (w.type === 'text') {
-            if (!force && now - x.lastPaint < (w.rate || TEXT_MS)) return;
+            if (!force && now - x.lastPaint < (w.rate || (LIVE_TOKENS.test(w.text) ? LIVE_TEXT_MS : TEXT_MS))) return;
             let s = (w.navHide && this.navShown) || smartTemps.hidden(this, w) || !this._shownNow(w) ? '' : this._resolve(w.text);   // nav turn showing / "showWhen"
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
