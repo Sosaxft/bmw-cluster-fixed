@@ -1985,9 +1985,9 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
     float t = (u_scale.x - q.y) / (u_scale.x - u_scale.y);
     bool inY = q.y > u_geo.x + 5.0 && q.y < u_geo.z - 4.0;
     // the band: shaded from its outer edge (bright) inwards (dark); lit brighter up to the value, white marker on top
-    float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - 5.0 - u_w);
+    float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - u_inner + 1.0);
     if (inB > 0.0) {
-        float f = clamp((d - 5.0) / u_w, 0.0, 1.0);
+        float f = clamp((d - 5.0) / (u_inner - 6.0), 0.0, 1.0);
         // bright at the outer edge (a lit rim) shading to deep colour at the inner one
         vec3 col = mix(BANDC * 1.25, BANDC * 0.45, smoothstep(0.0, 1.0, f));
         col = mix(col, LITC, (1.0 - smoothstep(0.0, 0.16, f)) * 0.55);
@@ -2017,25 +2017,35 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
     il = max(il, cov(segD(q, vec2(xt, yTopI), vec2(u_topEnd - 14.0, yTopI)) - 1.8));
     il = max(il, cov(segD(q, vec2(xb, yBotI), vec2(u_strip.x - 14.0, yBotI)) - 1.8));
     c = over(vec4(LINE, 0.95 * il), c);
+    // the thick bar under the bottom run, bright at the bracket and fading toward the middle
+    float bx0 = bl.x + 30.0, bx1 = u_strip.x + 20.0;
+    if (q.x > bl.x && q.x < bx1 && q.y > u_geo.z + 6.0 && q.y < u_geo.z + 26.0) {
+        float bb = cov(abs(q.y - (u_geo.z + 15.0)) - 7.0) * clamp((q.x - bl.x) / 30.0, 0.0, 1.0);
+        float fade = 1.0 - smoothstep(bx0, bx1, q.x);
+        c = over(vec4(mix(BANDC * 1.3, LITC, 0.35), bb * fade), c);
+    }
     return c;
 }
 
-// a two-tone slanted bar from the empty end b to the full end a, with a thin rail beside it
+// a slanted bar from the empty end b to the full end a, square-ended and cut into short segments (as BMW's), with a
+// tick beside it halfway
 vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
     vec2 a = s.xy, b = s.zw;
-    float h = 1.0 - segH(p, a, b);
-    vec2 dir = normalize(a - b), nrm = vec2(-dir.y, dir.x);
-    float side = dot(p - b, nrm);
-    float along = segD(p, a, b);
-    if (along > 30.0) return c;
-    float body = cov(abs(side) - 9.0) * cov(segD(p, a, b) - 9.5);
-    vec3 col = vec3(0.96);
+    float L = length(a - b);
+    vec2 dir = (a - b) / L, nrm = vec2(-dir.y, dir.x);
+    float al = dot(p - b, dir), side = dot(p - b, nrm);
+    if (abs(side) > 30.0 || al < -30.0 || al > L + 30.0) return c;
+    float h = al / L;
+    float body = cov(abs(side) - 5.5) * cov(-al) * cov(al - L);
+    float seg = cov(abs(mod(al, 9.0) - 4.5) - 3.0);      // 6 px on, 3 px off
+    body *= seg;
+    vec3 col = vec3(0.97);
     if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
-    c = over(vec4(0.2, 0.22, 0.27, 0.9 * body), c);
+    c = over(vec4(0.62, 0.66, 0.74, 0.32 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
     if (zones > 0.5) c = over(vec4(0.2, 0.55, 1.0, body * step(h, 0.1)), c);
-    float mk = abs(segH(p, a, b) - 0.5) * length(a - b);   // one tick beside the bar, halfway
-    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 15.0) * (1.0 - body)), c);   // ticks beside the bar only
+    float mk = abs(al - 0.5 * L);
+    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 13.0) * cov(-(abs(side) - 7.5))), c);
     return c;
 }
 

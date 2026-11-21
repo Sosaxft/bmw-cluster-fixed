@@ -78,3 +78,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 ## HUD Widgets 0.16.1 — "Blinkers only" layout
 - New layout "Blinkers only" (first after Off in every layout list): adds nothing but the turn-signal / hazard arrows,
   so BMW's own HUD stays exactly as it is with the arrows flashing in its top corners.
+
+## Cluster Themes 0.21.3 — Live Cockpit Map closer to BMW's
+- The speed / rev bands are now one continuous shaded band from the bright outer line to the inner line (no black gap),
+  as on BMW's screen.
+- A thick bar under each bracket's bottom run, bright at the bracket and fading toward the middle.
+- Fuel and oil gauges redrawn like BMW's: thinner, square-ended and cut into short segments, dim where empty.
