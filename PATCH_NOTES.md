@@ -106,3 +106,7 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - The map no longer runs under the speed and the gear: it shows through the middle of the hexagon and fades out into
   its night blue on every side (hexlc u_fade; gen_lcmap.py HOLE / FADE), the brackets' blue and red glowing over its
   edges as before.
+
+## Cluster Themes 0.22.2 — Live Cockpit Map: a bigger map
+- The map shows over more of the hexagon (x 612..1408, all of BMW's map window's height) and fades out over a shorter
+  edge (105 px a side, 55 top, 45 bottom), still clear of the speed and the gear.

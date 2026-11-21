@@ -22,8 +22,8 @@ W, H = 1920, 660
 MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster draws (mapcal.json)
 # the map shows from HOLE and fades out over FADE px a side (left, top, right, bottom) into the hexagon's night blue,
 # gone before the speed (x 385..625) and the gear (x 1370..1610)
-HOLE = [640, 126, 730, 468]
-FADE = [150, 80, 150, 70]
+HOLE = [612, 120, 796, 480]
+FADE = [105, 55, 105, 45]
 
 # the Sport theme's brackets, traced off the car (sport.json)
 GEO = [120, 310.7, 604.0, 180]
