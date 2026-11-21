@@ -64,7 +64,12 @@ for i, (x, y) in enumerate(RPM):
 widgets += [
     text('mph_cap', 338, 88, 80, 25, '{{u:speedLc}}', 'u_cap', 'lblue'),
     text('rpm_cap', 1442, 88, 200, 25, '1/min x 1000', 'u_cap', 'lred'),
-    text('badge', 810, 72, 300, 25, '{{badge}}', 'u_cap', 'dim'),
+    text('badge', 810, 48, 300, 25, '{{badge}}', 'u_cap', 'dim'),
+    # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
+    text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
+    # the next turn from CarPlay / BMW navigation (Redline's directions, shared/nav.js), at the top of the map
+    {'id': 'nav', 'type': 'nav', 'class': 'overlay', 'z': 20, 'x': 810, 'y': 134, 'w': 300, 'h': 114,
+     'toggle': '!navDirections=off'},
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
     text('speed', 385, 304, 240, 64, '{{speed}}', 'q_big', 'fg'),
     text('speed_unit', 455, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
@@ -74,19 +79,21 @@ widgets += [
     text('f_full', 393, 407, 60, 29, '1', 'u_small', 'fg'),
     text('f_half', 448, 485, 60, 29, '1/2', 'u_small', 'fg'),
     icon('fuel_icon', 'fuel', 512, 485, 22, 26),
+    # the range beside the fuel gauge, the oil temperature beside the oil gauge
+    text('f_range', 532, 525, 58, 29, '{{range}}', 'u_small', 'fg', 'right'),
+    text('f_range_u', 593, 527, 30, 25, '{{u:distLc}}', 'u_cap', 'dim', 'left'),
     text('f_empty', 503, 563, 60, 29, '0', 'u_small', 'fg'),
     text('o_hot', 1467, 407, 60, 29, '{{temp:150}}', 'u_small', 'fg'),
     text('o_mid', 1412, 485, 60, 29, '{{temp:100}}', 'u_small', 'fg'),
     icon('oil_icon', 'oilcan', 1370, 522, 34, 22, 'lblue'),
+    text('o_now', 1290, 519, 76, 29, '{{oil}}°', 'u_small', 'fg', 'right'),
     text('o_cold', 1357, 563, 60, 29, '{{temp:50}}', 'u_small', 'fg'),
     # the bottom strip, as the Sport theme (BMW's gear letter shows in the gap x 1380..1460)
     {'id': 'strip_cover_l', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 0, 'y': 660, 'w': 1380, 'h': 60, 'color': 'bg', 'stripRow': 'l'},
     {'id': 'strip_cover_r', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 1460, 'y': 660, 'w': 460, 'h': 60, 'color': 'bg', 'stripRow': 'r'},
     text('strip_time', 120, 678, 124, 26, '{{time}}', 'u_val', 'fg', 'right', stripRow='l'),
     text('strip_ampm', 250, 680, 35, 25, '{{ampmLc}}', 'u_cap', 'dim', 'left', stripRow='l'),
-    # range bottom-left as in the photo, clear of BMW's seat-belt light (x 587..626)
-    text('strip_range', 330, 678, 130, 26, '{{range}}', 'u_val', 'fg', 'right', stripRow='l'),
-    text('strip_range_u', 466, 680, 36, 25, '{{u:distLc}}', 'u_cap', 'dim', 'left', stripRow='l'),
+    # (the range sits by the fuel gauge)
     text('strip_out', 1676, 678, 80, 26, '{{ambient}}', 'u_val', 'fg', 'right', stripRow='r'),
     text('strip_out_u', 1762, 680, 27, 25, '{{u:temp}}', 'u_cap', 'dim', 'left', stripRow='r'),
 ]

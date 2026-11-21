@@ -101,6 +101,7 @@ UBUNTU = [
     ('u_small', 'Ubuntu-Medium.ttf', 25, B.DIGITS + '/.:-°% '),               # the gauges' numbers (1/2, temperatures)
     ('u_cap', 'Ubuntu-Medium.ttf', 22, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x '),   # mph, 1/min x 1000, units, the badge
     ('u_val', 'Ubuntu-Bold.ttf', 28, B.DIGITS + ':.-+° '),                    # the strip's clock, range, outside
+    ('u_mode', 'Ubuntu-Bold.ttf', 27, B.UPPER + ' '),                         # COMFORT / SPORT / ECO PRO
 ]
 
 if __name__ == '__main__':

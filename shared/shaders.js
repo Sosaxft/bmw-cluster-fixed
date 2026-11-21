@@ -1918,7 +1918,7 @@ const HEXLC = `// The Live Cockpit Map theme in one cluster-render "effect" laye
 // screen with the map up: two brackets of the Sport theme's real-car geometry (speed left in blue, revs right in red),
 // each a bright outer line, a band shaded from its outer edge inwards and lit to the value, and an inner line, with their
 // top and bottom runs; the Waze map cut see-through to the hexagon's inside (and never past the map window u_hole); the
-// slanted fuel / oil bars in its lower corners stay up over the map; a road while no map shows. Same uniforms as
+// slanted fuel / oil bars in its lower corners stay up over the map. Same uniforms as
 // sdash and hexdash, so hud.js drives all three alike; u_strip.x is where the bottom runs end here. (0,0) top-left.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -1946,7 +1946,7 @@ uniform vec4 u_fade;      // the map fading out over this many px a side: left, 
 uniform float u_holeR;    // how far inside the inner line the map starts, px
 uniform vec4 u_strip;     // x: the bottom runs end here (left; mirrored), y, z, w: unused
 uniform float u_topEnd;   // the top runs end here (left; mirrored)
-uniform vec4 u_road;      // the road in the hexagon: horizon y, px scale, dash phase 0..1, on
+uniform vec4 u_road;      // unused here (hud.js sets it for sdash / hexdash / hexlc alike)
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 top, vec4 under) {
@@ -1978,19 +1978,20 @@ float hexIn(vec2 p, float ins) {
 
 // one bracket (q mirrored for the right one); side 0 speed (blue), 1 revs (red)
 vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float side, vec4 c) {
-    vec3 LINE = side < 0.5 ? vec3(0.16, 0.56, 1.0) : vec3(1.0, 0.13, 0.17);
-    vec3 BANDC = side < 0.5 ? vec3(0.07, 0.36, 0.9) : vec3(0.76, 0.05, 0.09);
-    vec3 LITC = side < 0.5 ? vec3(0.5, 0.82, 1.0) : vec3(1.0, 0.5, 0.42);
+    vec3 LINE = side < 0.5 ? vec3(0.24, 0.66, 1.0) : vec3(1.0, 0.2, 0.24);
+    vec3 BANDC = side < 0.5 ? vec3(0.09, 0.44, 1.0) : vec3(0.9, 0.07, 0.11);
+    vec3 LITC = side < 0.5 ? vec3(0.6, 0.88, 1.0) : vec3(1.0, 0.58, 0.5);
     float d = dIn(q);
     float yTopI = u_geo.x + 8.0, yBotI = u_geo.z - 8.0;
     float t = (u_scale.x - q.y) / (u_scale.x - u_scale.y);
     bool inY = q.y > u_geo.x + 5.0 && q.y < u_geo.z - 4.0;
+    float iy = inY ? 1.0 : 0.0;
     // the band: shaded from its outer edge (bright) inwards (dark); lit brighter up to the value, white marker on top
-    float inB = (inY ? 1.0 : 0.0) * cov(-(d - 5.0)) * cov(d - u_inner + 1.0);
+    float inB = iy * cov(-(d - 5.0)) * cov(d - u_inner + 1.0);
     if (inB > 0.0) {
         float f = clamp((d - 5.0) / (u_inner - 6.0), 0.0, 1.0);
         // bright at the outer edge (a lit rim) shading to deep colour at the inner one
-        vec3 col = mix(BANDC * 1.25, BANDC * 0.45, smoothstep(0.0, 1.0, f));
+        vec3 col = mix(BANDC * 1.35, BANDC * 0.6, smoothstep(0.0, 1.0, f));
         col = mix(col, LITC, (1.0 - smoothstep(0.0, 0.16, f)) * 0.55);
         if (t <= val) col = mix(LITC, BANDC * 1.4, f * 0.8);
         c = over(vec4(col, 0.95 * inB), c);
@@ -2009,7 +2010,7 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
     vec2 tl = vec2(outerX(u_geo.x), u_geo.x), bl = vec2(outerX(u_geo.z), u_geo.z);
     o = max(o, cov(segD(q, tl, vec2(u_topEnd, u_geo.x)) - 3.6));
     o = max(o, cov(segD(q, bl, vec2(u_strip.x, u_geo.z)) - 3.6));
-    c = over(vec4(LINE, 0.35 * exp(-abs(d) / 7.0) * (inY ? 1.0 : 0.0) * step(d, 0.0)), c);
+    c = over(vec4(LINE, 0.55 * exp(-abs(d) / 12.0) * iy * step(d, 0.0)), c);
     c = over(vec4(LINE, o), c);
     // the inner line, with its own top and bottom runs
     float il = (q.y > yTopI && q.y < yBotI) ? cov(abs(d - u_inner) - 1.8) : 0.0;
@@ -2019,11 +2020,10 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
     il = max(il, cov(segD(q, vec2(xb, yBotI), vec2(u_strip.x - 14.0, yBotI)) - 1.8));
     c = over(vec4(LINE, 0.95 * il), c);
     // the thick bar under the bottom run, bright at the bracket and fading toward the middle
-    float bx0 = bl.x + 30.0, bx1 = u_strip.x + 20.0;
-    if (q.x > bl.x && q.x < bx1 && q.y > u_geo.z + 6.0 && q.y < u_geo.z + 26.0) {
-        float bb = cov(abs(q.y - (u_geo.z + 15.0)) - 7.0) * clamp((q.x - bl.x) / 30.0, 0.0, 1.0);
-        float fade = 1.0 - smoothstep(bx0, bx1, q.x);
-        c = over(vec4(mix(BANDC * 1.3, LITC, 0.35), bb * fade), c);
+    float bx1 = u_strip.x + 20.0;
+    if (q.x > bl.x && q.x < bx1 && abs(q.y - u_geo.z - 16.0) < 10.0) {
+        float bb = cov(abs(q.y - u_geo.z - 15.0) - 7.0) * clamp((q.x - bl.x) / 30.0, 0.0, 1.0) * (1.0 - smoothstep(bl.x + 30.0, bx1, q.x));
+        c = over(vec4(mix(BANDC * 1.3, LITC, 0.35), bb), c);
     }
     return c;
 }
@@ -2045,8 +2045,10 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
     c = over(vec4(0.62, 0.66, 0.74, 0.32 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
     if (zones > 0.5) c = over(vec4(0.2, 0.55, 1.0, body * step(h, 0.1)), c);
-    float mk = abs(al - 0.5 * L);
-    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - 13.0) * cov(-(abs(side) - 7.5))), c);
+    float q = clamp(floor(al / L * 4.0 + 0.5), 0.0, 4.0), mk = abs(al - q * 0.25 * L);
+    float reach = mod(q, 2.0) < 0.5 ? 16.0 : 12.0;
+    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - reach) * cov(-(abs(side) - 7.5))), c);
+    if (zones < 0.5) c = over(vec4(1.0, 0.22, 0.24, 0.9 * cov(abs(side + 9.5) - 1.6) * cov(-al) * cov(al - 0.12 * L)), c);
     return c;
 }
 
@@ -2059,7 +2061,7 @@ void main() {
     c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, 1.0, c);
     float hx = hexIn(p, u_holeR);
     // the hexagon's inside: a night-map blue
-    c = over(vec4(0.05, 0.085, 0.15, clamp(hx + 0.5, 0.0, 1.0)), c);
+    c = over(vec4(mix(vec3(0.075, 0.12, 0.21), vec3(0.04, 0.065, 0.12), clamp((p.y - u_geo.x) / (u_geo.z - u_geo.x), 0.0, 1.0)), clamp(hx + 0.5, 0.0, 1.0)), c);
     if (u_hole.z > 0.0) {
         // the map shows through the middle and fades out into that blue on every side (u_fade), so it never reaches
         // the speed or the gear; only inside the hexagon, softly at its edge
@@ -2068,23 +2070,12 @@ void main() {
             * smoothstep(0.0, u_fade.w, bt) * clamp(hx / 24.0, 0.0, 1.0);
         c.a *= 1.0 - m;
     }
-    if (u_hole.z <= 0.0 && u_road.w > 0.5 && p.y > u_road.x + 1.0 && hx > -1.0) {
-        float dy = p.y - u_road.x;
-        float xw = (p.x - u_size.x * 0.5) * u_road.y / dy;
-        float px = dy / u_road.y;
-        float fade = smoothstep(0.0, 70.0, dy) * clamp(hx + 0.5, 0.0, 1.0);
-        float hw = 1.2 + dy * 0.012;
-        float edge = cov(abs(abs(xw) - 1.5) * px - hw);
-        float dash = step(fract(u_road.y * 120.0 / dy + u_road.z), 0.5);
-        float lane = cov(abs(abs(xw) - 0.5) * px - hw) * dash;
-        c = over(vec4(0.85, 0.9, 1.0, 0.6 * fade * max(edge, lane)), c);
-    }
     // shades: each bracket's colour glows in over the hexagon's inside edge, over the map too (as BMW's own screen)
     float m = clamp(hexIn(p, 0.0) + 0.5, 0.0, 1.0);
     if (m > 0.0) {
-        float gL = exp(-max(dIn(p) - u_inner, 0.0) / 85.0), gR = exp(-max(dIn(pm) - u_inner, 0.0) / 85.0);
-        c = over(vec4(0.12, 0.45, 1.0, 0.42 * gL * m), c);
-        c = over(vec4(1.0, 0.12, 0.15, 0.42 * gR * m), c);
+        float gL = exp(-max(dIn(p) - u_inner, 0.0) / 110.0), gR = exp(-max(dIn(pm) - u_inner, 0.0) / 110.0);
+        c = over(vec4(0.14, 0.5, 1.0, 0.55 * gL * m), c);
+        c = over(vec4(1.0, 0.14, 0.18, 0.55 * gR * m), c);
     }
     // the fuel and oil bars in the hexagon's lower corners, over the map too (as BMW's own screen)
     c = bar(p, u_fuelSeg, u_fuel, 0.0, c);

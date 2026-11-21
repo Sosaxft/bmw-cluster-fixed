@@ -110,3 +110,15 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 ## Cluster Themes 0.22.2 — Live Cockpit Map: a bigger map
 - The map shows over more of the hexagon (x 612..1408, all of BMW's map window's height) and fades out over a shorter
   edge (105 px a side, 55 top, 45 bottom), still clear of the speed and the gear.
+
+## Cluster Themes 0.23.0 — Live Cockpit Map: livelier, drive mode, next turn, richer gauges
+- Livelier: brighter, more saturated blue and red brackets and bands (shaded less dark), a wider glow off the outer
+  lines and over the hexagon's inside edge, a deep blue inside that lightens towards the top.
+- The drive mode over the hexagon (SPORT red, COMFORT blue, ECO PRO green; text "colorBy": "mode", theme roles
+  modeSport / modeComfort / modeEco).
+- The next turn at the top of the map (arrow, distance, street) from CarPlay / Android Auto / BMW navigation: Redline's
+  directions (shared/nav.js, hud_nav.js), setting "Next turn on the cluster" (while a route runs / near turns / off).
+  Its interfaces are optional: a unit without them installs as before.
+- Gauges: marks at 0, 1/4, 1/2, 3/4 and full, the fuel reserve marked red; the range beside the fuel gauge, the oil
+  temperature beside the oil gauge.
+- The shader sheds the unused road (8472 tokens, about what 0.21 had).

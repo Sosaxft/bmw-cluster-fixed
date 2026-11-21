@@ -223,7 +223,8 @@
  *             ("own"), all on the first connection with room for them; past 28 layers in all they share one. Drawn on the
  *             CPU once; while the car stands (under 3 km/h) a few bulbs dim for a moment (at most 4 redraws a second, only
  *             those bulbs' rects sent), moving nothing changes. The rebuild log line "holiday lights" gives its boxes.
- * Text "colorBy": "verdict" colours it by the last shift's grade. Text "near": ["speed" | "rpm", i] turns it
+ * Text "colorBy": "verdict" colours it by the last shift's grade; "mode" by the drive mode (theme roles modeSport,
+ * modeComfort, modeEco). Text "near": ["speed" | "rpm", i] turns it
  * "nearColor" (fg) while scale label i is the one nearest the value (BMW lights up the label by the needle).
  *
  * rpm is smoothed (a 60 ms filter, and the readout moves in 50 rpm steps only when it changes by 40 or
@@ -2600,6 +2601,8 @@ class HudApp {
             let s = (w.navHide && this.navShown) || smartTemps.hidden(this, w) || !this._shownNow(w) ? '' : this._resolve(w.text);   // nav turn showing / "showWhen"
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
+            // "colorBy": "mode": the drive mode's colour, as BMW's (roles modeSport / modeComfort / modeEco)
+            if (w.colorBy === 'mode') role = this.driveMode === 'sport' ? 'modeSport' : this.driveMode === 'eco' ? 'modeEco' : 'modeComfort';
             if (w.near && this._nearMark(w.near[0]) === w.near[1]) role = w.nearColor || 'fg';
             // a readout slot goes red / blue at the shift point only while it shows engine speed or the shift point
             const shiftish = !w.slot || ['rpm', 'shiftAt'].indexOf((this.slotSensor(this.activeName, w.slot, this.layoutSlots) || {}).id) >= 0;
