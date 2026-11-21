@@ -207,3 +207,10 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - With a Waze on Cluster that draws the map under the theme (robertnisipeanu's 0.11), the theme's window onto BMW's map
   slot now starts at x 690, past BMW's own map-screen speed readout ("mph", x ~600..712), so it no longer shows beside
   the theme's speed. Drawn over the theme (the layout window) the window is unchanged.
+
+## Cluster Themes 0.25.2 — a test for BMW's black boxes
+- With Maps on cluster removed the two boxes still show (car photo Nov 21 2026), over a theme that is opaque there: they
+  are BMW's own, drawn ABOVE the panel (BimmerCode's M display; the right one where its big gear letter sits). On an X3
+  BMW drew such a box only while a theme covered its gear letter in the bottom strip. New test switch "Leave BMW's
+  bottom strip uncovered (test)" (stripClear): no strip row and no strip covers, BMW's strip as it is, to see whether
+  covering something of the M display's strip is what makes BMW draw them.
