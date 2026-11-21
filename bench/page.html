@@ -299,6 +299,21 @@
     // the street, the drive mode, the gear letter, outside temperature. It sits UNDER our layers: a theme drawn over it hides it.
     ctx.fillStyle = 'rgba(235,238,242,.8)'; ctx.font = '30px sans-serif';
     [['138 mi', 180], ['4:24 pm', 355], ['Main St', 860], ['COMFORT', 1180], ['P', 1372], ['+54 \u00b0F', 1475]].forEach(([t, x]) => ctx.fillText(t, x, 700));
+    // ?mapover=x,y,w,h: a stand-in dark CarPlay map drawn in that rect, as a Waze on Cluster that reads the layout
+    // window draws it over the theme (under the theme's overlays, here simply under everything)
+    const mo = /[?&]mapover=(\d+),(\d+),(\d+),(\d+)/.exec(location.search);
+    if (mo) {
+      const [x, y, w, h] = mo.slice(1).map(Number);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+      ctx.fillStyle = '#1b222c'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#202a36'; for (let i = 0; i < 14; i++) ctx.fillRect(x + (i * 211) % w, y + (i * 97) % h, 140, 90);
+      ctx.strokeStyle = '#3b4656'; ctx.lineWidth = 10;
+      for (let i = -3; i < 12; i++) { ctx.beginPath(); ctx.moveTo(x + i * 160, y); ctx.lineTo(x + i * 160 + 260, y + h); ctx.stroke(); }
+      for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x, y + 60 + i * 110); ctx.lineTo(x + w, y + 20 + i * 110); ctx.stroke(); }
+      ctx.strokeStyle = '#2fd0e6'; ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(x + w / 2, y + h); ctx.lineTo(x + w / 2, y + h * 0.45); ctx.lineTo(x + w * 0.72, y + h * 0.3); ctx.stroke();
+      ctx.fillStyle = '#9aa6b4'; ctx.font = '22px sans-serif'; ctx.fillText('Orange Ave', x + w * 0.3, y + h * 0.33); ctx.fillText('Colonial Dr', x + w * 0.62, y + h * 0.62);
+      ctx.restore();
+    }
   }
 
   // ?clean=1: no outlines, for screenshots

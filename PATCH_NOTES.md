@@ -166,3 +166,12 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   layout "mapWindow"), and a new overlay "mapfade" (shaders.js, 216 tokens) fades the map's edges into the theme's
   own colours round it. With robertnisipeanu's 0.11 (no window support) the theme opens the same window onto the map
   slot, as before.
+
+## Cluster Themes 0.24.1 — Live Cockpit Map: one picture, the map behind the whole theme
+- With a Waze on Cluster that reads the layout window, the map now fills the panel behind the whole hexagon
+  (257,40 1405x620, its own shape) and the theme is drawn over it as one overlay (hexlc now class overlay, the
+  readouts overlays above it): the map fades in from the hexagon's inner line, shows dimmed outside the hexagon, fades
+  out at the window's edges, and is darker behind the speed and the gear (u_scrim) so they read; no separate box.
+  "holeOver" is the window while the map is drawn over the theme ("mapOver", waze.js over); BMW's map slot otherwise.
+  The "mapfade" overlay is no longer used by it. hexlc: 8555 tokens.
+- bench/page.html ?mapover=x,y,w,h: a stand-in dark map in that rect.

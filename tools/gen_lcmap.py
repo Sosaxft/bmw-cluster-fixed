@@ -27,10 +27,13 @@ MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster d
 # theme there, so BMW's own map screen under the theme (its speed readout, shading, the M display's dark boxes) never
 # shows; "mapfade" fades its edges over it. With a Waze on Cluster that doesn't read the window (robertnisipeanu's
 # 0.11) the theme opens the same window onto the map slot instead, where BMW's map screen does show.
-MAPWIN = [640, 184, 764, 337]
-HOLE = MAPWIN
-FADE = [1, 1, 1, 1]
-MAPFADE = [70, 46, 70, 40]
+# Drawn over the theme (the layout window) the map fills the panel behind the whole hexagon, at its own shape
+# (1088x480 x 1.29), the theme drawn over it as an overlay: the map fades in from the hexagon's inner line, dimmed
+# outside it, darker behind the speed and the gear. Under the theme (0.11, the map slot) the window is BMW's map slot.
+MAPWIN = [257, 40, 1405, 620]
+HOLE = MAP
+FADE = [120, 60, 120, 50]
+SCRIM = [505, 1510, 340, 190]          # the speed's and the gear's centres x, y; the half width
 
 # the Sport theme's brackets, traced off the car (sport.json)
 GEO = [120, 310.7, 604.0, 180]
@@ -47,27 +50,24 @@ RPM = [(1562, 580), (1610, 518), (1658, 455), (1706, 392), (1749, 329), (1752, 2
 
 
 def text(id_, x, y, w, h, tx, font, color, align='center', **kw):
-    d = {'id': id_, 'type': 'text', 'z': 5, 'x': x, 'y': y, 'w': w, 'h': h, 'text': tx, 'font': font, 'color': color,
+    # every readout an overlay: over the theme's own layer (an overlay too, z 0) and over the map when it is drawn on
+    # the panel (the layout window: a content layer, z 900)
+    d = {'id': id_, 'type': 'text', 'class': 'overlay', 'z': 5, 'x': x, 'y': y, 'w': w, 'h': h, 'text': tx, 'font': font, 'color': color,
          'align': align}
     d.update(kw)
     return d
 
 
 def icon(id_, name, x, y, w, h, color='dim'):
-    return {'id': id_, 'type': 'icon', 'icon': name, 'z': 5, 'x': x, 'y': y, 'w': w, 'h': h, 'color': color}
+    return {'id': id_, 'type': 'icon', 'icon': name, 'class': 'overlay', 'z': 5, 'x': x, 'y': y, 'w': w, 'h': h, 'color': color}
 
 
 widgets = [{
-    'id': 'lc', 'type': 'hexlc', 'class': 'content', 'z': 1, 'x': 0, 'y': 0, 'w': W, 'h': H,
+    'id': 'lc', 'type': 'hexlc', 'class': 'overlay', 'z': 0, 'x': 0, 'y': 0, 'w': W, 'h': H,
     'geo': GEO, 'k': K, 'band': BAND, 'inner': INNER, 'scale': SCALE, 'ticks': TICKS, 'rpmMax': RPM_MAX,
     'fuelSeg': FUEL_SEG, 'oilSeg': OIL_SEG, 'strip': [BOTTOM_END, 0, 0, 0], 'topEnd': TOP_END,
-    'hole': HOLE, 'holeWhen': 'mapUp', 'holeInset': 0, 'holeRadius': 6, 'fade': FADE,
+    'hole': HOLE, 'holeOver': MAPWIN, 'holeWhen': 'mapUp', 'holeInset': 0, 'holeRadius': 6, 'fade': FADE, 'scrim': SCRIM,
 }]
-# the map's edges fading into the hexagon's inside, over the map when it is drawn on the theme (an overlay)
-widgets.append({'id': 'map_fade', 'type': 'mapfade', 'class': 'overlay', 'z': 0, 'x': MAPWIN[0], 'y': MAPWIN[1],
-                'w': MAPWIN[2], 'h': MAPWIN[3], 'hole': MAPWIN, 'holeWhen': 'mapUp', 'holeInset': 0, 'fade': MAPFADE,
-                # the hexagon's inside round the window, as drawn (bench): left, middle, right, each top and bottom
-                'edge': [[24, 33, 47], [19, 31, 50], [25, 29, 40], [20, 22, 31], [48, 29, 39], [64, 25, 33]]})
 for i, (x, y) in enumerate(SPD):
     widgets.append(text('spd%d' % i, x, y + 1, 110, 25, '{{spd:%d}}' % i, 'q_scale', 'lscale', 'right',
                         near=['speed', i], nearColor='fg'))

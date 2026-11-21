@@ -65,6 +65,7 @@ class Waze {
         this.wanted = false;
         this.st = null;              // the last status read: { state, target } or null (no file / unreadable / stale)
         this.up = false;             // the map is showing on the panel
+        this.over = false;           // ... drawn over the theme, in our layout window
         this.sending = false;
         this.nextTry = 0;
         this.problem = null;         // 'busy' | an error text, from the last send
@@ -190,9 +191,12 @@ class Waze {
         if (s && s.target === 'map' && this.moved && (!this.wanted || s.v11)) this._setMoved(false);   // it's back (0.11: always)
         if (s && s.target === 'panel' && this.problem) this.problem = null;
         const up = !!(this.wanted && s && s.state === 'showing' && (s.v11 ? s.cluster && (s.target === 'map' || s.target === 'panel') : s.target === 'panel'));
+        // over: drawn on the panel over the theme, in the window we hold (a map app that reads it)
+        const over = !!(up && this.windowFd !== null && s.target === 'panel');
         const text = this.info().text;
-        const changed = up !== this.up || text !== this.lastText;
+        const changed = up !== this.up || over !== this.over || text !== this.lastText;
         this.up = up;
+        this.over = over;
         this.lastText = text;
         this._sync();
         if (changed) this.onChange();

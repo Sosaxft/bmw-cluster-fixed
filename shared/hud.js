@@ -579,7 +579,7 @@ class HudApp {
         this.mapLayout = false;          // the active layout has a map window (a widget with holeWhen "mapUp")
         // the Waze map inside the theme (Cluster Themes, config.waze; waze.js): "mapUp" is on while it shows
         this.waze = this.config.waze ? new Waze(Object.assign({ dataDir: ctx.dataDir }, this.config.waze), this.log, () => this._guard('waze', () => {
-            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) { if (this.mapLive) this._mapLive(); else this._rebuild(); } else this._status();
+            if (this.mapLayout && (this.setting('mapUp') !== this.mapShown || this.setting('mapOver') !== this.overShown)) { if (this.mapLive) this._mapLive(); else this._rebuild(); } else this._status();
         })) : null;
         this.mapShown = false;           // "mapUp" when the layout was built (or last opened / closed, mapLive)
         this.mapLive = false;            // the active layout opens and closes its map window without a rebuild
@@ -724,6 +724,8 @@ class HudApp {
     setting(key) {
         // "mapUp": not saved, the Waze map is showing inside the theme now (the setting on, waze.js says so)
         if (key === 'mapUp') return !!(this.waze && this.waze.up && this.ctx.settings.get('mapInTheme') === true);
+        // the map drawn over the theme in its window (the layout window, waze.js), not in the map slot under it
+        if (key === 'mapOver') return !!(this.waze && this.waze.over && this.ctx.settings.get('mapInTheme') === true);
         // "ribScale": not saved, the Ribbon's scale numbers to show: thousands on the bar, "c" while the camera dip is on
         if (key === 'ribScale') return String(this._barMax() / 1000) + (this._cameraOn() ? 'c' : '');
         const s = this.ctx.settings.item(key);
@@ -1920,6 +1922,7 @@ class HudApp {
         this.holidayAt = this._holidayNow();     // the light string's holiday (garland.js); the minute timer rebuilds when it changes
         this.mapLayout = false;
         this.mapShown = this.setting('mapUp');
+        this.overShown = this.setting('mapOver');
         if (name === 'off') {
             this._wazeWant();
             this.problem = null; this.layoutTheme = null; this.needsBoost = false; this.needsIntake = false; this.needsHv = false; this.needsFuel = false;
@@ -2188,7 +2191,7 @@ class HudApp {
             c.uniform(ref, 'u_topEnd', [w.topEnd]);
             c.uniform(ref, 'u_road', w.road ? [w.road[0], w.road[1], 0, 1] : [0, 1, 0, 0]);
             // Live Cockpit Map: the map fades out over "fade" px a side (1 px each: a sharp edge, as before)
-            if (w.type === 'hexlc') c.uniform(ref, 'u_fade', w.fade || [1, 1, 1, 1]);
+            if (w.type === 'hexlc') { c.uniform(ref, 'u_fade', w.fade || [1, 1, 1, 1]); c.uniform(ref, 'u_scrim', w.scrim || [0, 0, 0, 1]); }
         } else if (w.type === 'mapfade') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_hole', this._hole(w));
@@ -2506,7 +2509,8 @@ class HudApp {
     /** A widget's map hole in layer px, inset by "holeInset" (6) a side, while "holeWhen" is on; else no hole. */
     _hole(w) {
         const on = w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true);   // true: always cut
-        const h = w.hole && on ? w.hole : null;
+        // "holeOver": the window while the map is drawn over the theme (bigger: it is not limited to BMW's map slot)
+        const h = !on ? null : w.holeOver && this.setting('mapOver') === true ? w.holeOver : w.hole || null;
         if (!h) return [0, 0, 0, 0];
         const inset = isNum(w.holeInset) ? w.holeInset : 6;
         return [h[0] + inset - w.x, h[1] + inset - w.y, Math.max(0, h[2] - 2 * inset), Math.max(0, h[3] - 2 * inset)];
@@ -2575,6 +2579,7 @@ class HudApp {
      */
     _mapLive() {
         this.mapShown = this.setting('mapUp');
+        this.overShown = this.setting('mapOver');
         this.widgets.forEach((x) => { if (!x.sheet && x.c && x.w.holeWhen === 'mapUp') x.c.uniform(x.ref, 'u_hole', this._hole(x.w)); });
         this._status();
     }

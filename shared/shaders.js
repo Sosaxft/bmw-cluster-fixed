@@ -1943,6 +1943,7 @@ uniform vec4 u_fuelSeg;   // full end x, y, empty end x, y
 uniform vec4 u_oilSeg;
 uniform vec4 u_hole;      // where the map shows from: x, y, w, h (w 0 = closed)
 uniform vec4 u_fade;      // the map fading out over this many px a side: left, top, right, bottom
+uniform vec4 u_scrim;     // darker behind the speed and the gear: their centres' x (left, right), y, the half width
 uniform float u_holeR;    // how far inside the inner line the map starts, px
 uniform vec4 u_strip;     // x: the bottom runs end here (left; mirrored), y, z, w: unused
 uniform float u_topEnd;   // the top runs end here (left; mirrored)
@@ -2063,11 +2064,13 @@ void main() {
     // the hexagon's inside: a night-map blue
     c = over(vec4(mix(vec3(0.1, 0.12, 0.16), vec3(0.06, 0.075, 0.105), clamp((p.y - u_geo.x) / (u_geo.z - u_geo.x), 0.0, 1.0)), clamp(hx + 0.5, 0.0, 1.0)), c);
     if (u_hole.z > 0.0) {
-        // the map shows through the middle and fades out into that blue on every side (u_fade), so it never reaches
-        // the speed or the gear; only inside the hexagon, softly at its edge
+        // the map shows through, fading in from the hexagon's inner line (and dimmed outside it), out at the window's
+        // edges (u_fade), and darker behind the speed and the gear so they stay easy to read
         float l = p.x - u_hole.x, tp = p.y - u_hole.y, rr = u_hole.x + u_hole.z - p.x, bt = u_hole.y + u_hole.w - p.y;
+        vec2 sl = (p - u_scrim.xz) / vec2(u_scrim.w, u_scrim.w * 0.5), sr = (p - u_scrim.yz) / vec2(u_scrim.w, u_scrim.w * 0.5);
         float m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, tp) * smoothstep(0.0, u_fade.z, rr)
-            * smoothstep(0.0, u_fade.w, bt) * clamp(hx / 24.0, 0.0, 1.0);
+            * smoothstep(0.0, u_fade.w, bt) * mix(0.3, 1.0, smoothstep(-40.0, 70.0, hx))
+            * (1.0 - 0.6 * exp(-dot(sl, sl)) - 0.6 * exp(-dot(sr, sr)));
         c.a *= 1.0 - m;
     }
     // shades: each bracket's colour glows in over the hexagon's inside edge, over the map too (as BMW's own screen)
