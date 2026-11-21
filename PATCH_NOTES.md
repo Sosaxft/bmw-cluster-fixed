@@ -133,3 +133,11 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - The next-turn arrow on Live Cockpit Map is gone again (the map itself shows the road); its interfaces and setting
   are out of Cluster Themes.
 - bench/fake-waze.js --v11 behaves as 0.11.
+
+## Cluster Themes 0.23.2 — Live Cockpit Map: blends with a dark map, covers BMW's map-view boxes
+- Dark only, made to blend with CarPlay's / Waze's dark map: the backdrop is the near-black blue-grey of a night map
+  (not pure black), the hexagon's inside the dark map's own blue-grey, the bottom strip the same tone.
+- BMW's own Map view draws two dark boxes over the map that the window showed (a photo in the car, Nov 21 2026): two
+  opaque cards now cover them (new image widget "card", icons.js paintCard; theme roles card / cardLine). The middle
+  one shows what's playing (title, artist), else the clock; the right one the drive mode in its colour. The clock moved
+  from the strip onto the card. The map now starts fading at x 690, past BMW's own "mph" left of it.

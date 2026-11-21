@@ -56,4 +56,28 @@ function paintIcon(name, w, h, color) {
     return out;
 }
 
-module.exports = { paintIcon, ICONS };
+/**
+ * A card (hud.js widget "card"): a rounded rectangle w x h, opaque, fill a little lighter at the top, a border of
+ * "border" px in line (its alpha kept), corners of radius r. Used to sit over parts of BMW's own map view that show
+ * through a theme's map window (Live Cockpit Map), with readouts on it.
+ */
+function paintCard(w, h, fill, line, border, r) {
+    const out = Buffer.alloc(w * h * 4, 0);
+    const la = line[3] === undefined ? 255 : line[3];
+    for (let y = 0; y < h; y++) {
+        const lift = 1 + 0.35 * Math.max(0, 1 - y / (h * 0.6));
+        for (let x = 0; x < w; x++) {
+            const qx = Math.abs(x + 0.5 - w / 2) - (w / 2 - r), qy = Math.abs(y + 0.5 - h / 2) - (h / 2 - r);
+            const d = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;   // < 0 inside
+            const a = Math.max(0, Math.min(1, 0.5 - d));
+            if (a <= 0) continue;
+            const b = border > 0 ? Math.max(0, Math.min(1, 0.5 - Math.abs(d + border / 2) + border / 2)) * la / 255 : 0;
+            const o = (y * w + x) * 4;
+            for (let i = 0; i < 3; i++) out[o + i] = Math.round(Math.min(255, fill[i] * lift) * (1 - b) + line[i] * b);
+            out[o + 3] = Math.round(a * 255);
+        }
+    }
+    return out;
+}
+
+module.exports = { paintIcon, paintCard, ICONS };

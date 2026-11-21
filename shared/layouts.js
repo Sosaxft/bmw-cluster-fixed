@@ -14,6 +14,7 @@ const visible = require('./visible');
 const sensors = require('./sensors');
 
 const TYPES = {
+    card: [],
     text: ['text', 'font'],
     scale: ['font'],
     stripe: [],

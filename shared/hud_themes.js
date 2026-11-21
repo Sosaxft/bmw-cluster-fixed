@@ -70,10 +70,11 @@ const THEMES = {
         glow: 0, stripe: false,
         bar: { low: [42, 143, 255], mid: [42, 143, 255], high: [255, 40, 48], midAt: 'shift' },
         rev: { from: [255, 34, 44], to: [255, 34, 44] },
-        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [255, 255, 255, 255], head: [226, 228, 232, 255],
+        bg: [8, 9, 13, 255], panel: [8, 9, 13, 255], line: [255, 255, 255, 255], head: [226, 228, 232, 255],
         ink: [12, 12, 14, 255], accent: [42, 143, 255, 255], well: [0, 0, 0, 255], faint: [104, 110, 122, 255],
         lscale: [222, 228, 236, 255], lblue: [92, 170, 255, 255], lred: [255, 84, 92, 255],
         modeSport: [255, 70, 80, 255], modeComfort: [120, 185, 255, 255], modeEco: [80, 220, 150, 255],
+        card: [22, 27, 37, 255], cardLine: [92, 150, 230, 140],
     },
     // Hex Map (layout hexmap.json, tools/gen_hexmap.py): black, a white hexagon frame glowing red to orange, the map inside.
     hexdash: {

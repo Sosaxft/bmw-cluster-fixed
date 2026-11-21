@@ -2055,13 +2055,13 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
 void main() {
     vec2 p = v_uv * u_size;
     vec2 pm = vec2(u_size.x - p.x, p.y);
-    vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 c = vec4(0.03, 0.036, 0.05, 1.0);
 
     c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, 0.0, c);
     c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, 1.0, c);
     float hx = hexIn(p, u_holeR);
     // the hexagon's inside: a night-map blue
-    c = over(vec4(mix(vec3(0.075, 0.12, 0.21), vec3(0.04, 0.065, 0.12), clamp((p.y - u_geo.x) / (u_geo.z - u_geo.x), 0.0, 1.0)), clamp(hx + 0.5, 0.0, 1.0)), c);
+    c = over(vec4(mix(vec3(0.1, 0.12, 0.16), vec3(0.06, 0.075, 0.105), clamp((p.y - u_geo.x) / (u_geo.z - u_geo.x), 0.0, 1.0)), clamp(hx + 0.5, 0.0, 1.0)), c);
     if (u_hole.z > 0.0) {
         // the map shows through the middle and fades out into that blue on every side (u_fade), so it never reaches
         // the speed or the gear; only inside the hexagon, softly at its edge

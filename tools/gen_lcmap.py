@@ -22,8 +22,13 @@ W, H = 1920, 660
 MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster draws (mapcal.json)
 # the map shows from HOLE and fades out over FADE px a side (left, top, right, bottom) into the hexagon's night blue,
 # gone before the speed (x 385..625) and the gear (x 1370..1610)
-HOLE = [612, 120, 796, 480]
-FADE = [105, 55, 105, 45]
+HOLE = [690, 120, 718, 480]
+FADE = [90, 55, 105, 45]
+# BMW's own map view draws two dark boxes over the map (a photo in the car, Nov 21 2026: x 806..1050, y 301..401 and
+# x 1226..1393, y 343..417), under the theme but over the map, so the window shows them: two opaque cards cover them,
+# with readouts on them (now playing or the clock; the drive mode)
+CARD1 = [782, 284, 292, 134]
+CARD2 = [1206, 326, 204, 106]
 
 # the Sport theme's brackets, traced off the car (sport.json)
 GEO = [120, 310.7, 604.0, 180]
@@ -61,16 +66,33 @@ for i, (x, y) in enumerate(SPD):
                         near=['speed', i], nearColor='fg'))
 for i, (x, y) in enumerate(RPM):
     widgets.append(text('rpm%d' % i, x, y + 1, 60, 25, str(i), 'q_scale', 'lscale', 'left', near=['rpm', i], nearColor='fg'))
+def card(id_, r):
+    return {'id': id_, 'type': 'card', 'z': 4, 'x': r[0], 'y': r[1], 'w': r[2], 'h': r[3], 'fill': 'card', 'line': 'cardLine',
+            'border': 2, 'radius': 16}
+
+
+c1x, c1y, c1w, c1h = CARD1
+c2x, c2y, c2w, c2h = CARD2
+widgets += [
+    card('card1', CARD1),
+    # now playing, else the clock
+    text('np_title', c1x + 14, c1y + 34, c1w - 28, 28, '{{mediaTitle}}', 'u_title', 'fg', showWhen='media', ellipsis=True),
+    text('np_artist', c1x + 14, c1y + 70, c1w - 28, 25, '{{mediaArtist}}', 'u_artist', 'dim', showWhen='media', ellipsis=True),
+    text('c_clock', c1x + 14, c1y + 50, c1w // 2 + 8, 33, '{{time}}', 'u_clock', 'fg', 'right', showWhen='!media'),
+    text('c_ampm', c1x + c1w // 2 + 28, c1y + 58, 60, 25, '{{ampmLc}}', 'u_cap', 'dim', 'left', showWhen='!media'),
+    card('card2', CARD2),
+    text('m_label', c2x + 10, c2y + 18, c2w - 20, 25, 'MODE', 'u_cap', 'dim'),
+    text('mode', c2x + 10, c2y + 54, c2w - 20, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
+]
 widgets += [
     text('mph_cap', 338, 88, 80, 25, '{{u:speedLc}}', 'u_cap', 'lblue'),
     text('rpm_cap', 1442, 88, 200, 25, '1/min x 1000', 'u_cap', 'lred'),
     text('badge', 810, 48, 300, 25, '{{badge}}', 'u_cap', 'dim'),
     # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
-    text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
     text('speed', 385, 304, 240, 64, '{{speed}}', 'q_big', 'fg'),
     text('speed_unit', 455, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
-    text('gear', 1370, 304, 240, 64, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
+    text('gear', 1434, 304, 156, 64, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
     # the fuel and oil gauges' ends and icons (the Sport theme's, kept up with the map as on BMW's screen)
     # the fuel and oil gauges: thick slanted bars (shader), three numbers along each and the icon (as the photo)
     text('f_full', 393, 407, 60, 29, '1', 'u_small', 'fg'),
@@ -88,8 +110,7 @@ widgets += [
     # the bottom strip, as the Sport theme (BMW's gear letter shows in the gap x 1380..1460)
     {'id': 'strip_cover_l', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 0, 'y': 660, 'w': 1380, 'h': 60, 'color': 'bg', 'stripRow': 'l'},
     {'id': 'strip_cover_r', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 1460, 'y': 660, 'w': 460, 'h': 60, 'color': 'bg', 'stripRow': 'r'},
-    text('strip_time', 120, 678, 124, 26, '{{time}}', 'u_val', 'fg', 'right', stripRow='l'),
-    text('strip_ampm', 250, 680, 35, 25, '{{ampmLc}}', 'u_cap', 'dim', 'left', stripRow='l'),
+    # (the clock sits on the map's card)
     # (the range sits by the fuel gauge)
     text('strip_out', 1676, 678, 80, 26, '{{ambient}}', 'u_val', 'fg', 'right', stripRow='r'),
     text('strip_out_u', 1762, 680, 27, 25, '{{u:temp}}', 'u_cap', 'dim', 'left', stripRow='r'),
@@ -119,7 +140,11 @@ def overlap(a, b):
 
 
 small = [w for w in widgets if w['type'] in ('text', 'icon')]
-errs = ['overlap: %s / %s' % (a['id'], b['id']) for i, a in enumerate(small) for b in small[i + 1:] if overlap(a, b)]
+def apart(a, b):   # never on screen together (now playing / the clock)
+    return {a.get('showWhen'), b.get('showWhen')} == {'media', '!media'}
+
+
+errs = ['overlap: %s / %s' % (a['id'], b['id']) for i, a in enumerate(small) for b in small[i + 1:] if overlap(a, b) and not apart(a, b)]
 if errs:
     print('\n'.join(errs))
     sys.exit(1)

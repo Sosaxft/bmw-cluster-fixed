@@ -93,6 +93,7 @@ def bake_sq(name, h, chars):
 
 
 DIG = '0123456789'
+ASCII = ''.join(chr(i) for i in range(32, 127))
 SQUARED = [
     ('q_big', 60, DIG + 'PRNDSM-'),       # the speed and the gear
     ('q_scale', 21, DIG),                 # the scale numbers
@@ -102,6 +103,9 @@ UBUNTU = [
     ('u_cap', 'Ubuntu-Medium.ttf', 22, B.UPPER + B.LOWER + B.DIGITS + '/.:-°%x '),   # mph, 1/min x 1000, units, the badge
     ('u_val', 'Ubuntu-Bold.ttf', 28, B.DIGITS + ':.-+° '),                    # the strip's clock, range, outside
     ('u_mode', 'Ubuntu-Bold.ttf', 27, B.UPPER + ' '),                         # COMFORT / SPORT / ECO PRO
+    ('u_title', 'Ubuntu-Bold.ttf', 24, ASCII),                                # now playing on the map card
+    ('u_artist', 'Ubuntu-Medium.ttf', 20, ASCII),
+    ('u_clock', 'Ubuntu-Bold.ttf', 40, B.DIGITS + ': '),                     # the map card's clock
 ]
 
 if __name__ == '__main__':

@@ -55,6 +55,8 @@
  *             "barH" bar height, "top" room for the marks above it, "slant" px, "over" rpm past the
  *             redline's thousand the scale runs to (1000: a 7000 redline gives 0..8)
  *   lights    effect layer; shaders.js lights, shift lights filling from "from" rpm (3000) up to the shift point
+ *   card      image layer; an opaque rounded card (icons.js paintCard): "fill" and "line" roles, "border" px, "radius"
+ *             px; static. Covers what shows through a map window (BMW's own map-view boxes), readouts go on it.
  *   badge     image layer; a rounded tag with text: "tone" verdict (the last shift's grade colour) or cold
  *   fill      effect layer; a solid colour (role "color", default "bg") over the whole widget, with an
  *             optional see-through "hole": [x, y, w, h] in target px, cut only while the bool setting
@@ -274,7 +276,7 @@ const ShiftScore = require('./shift_score');
 const visible = require('./visible');
 const sun = require('./sun');
 const textRaster = require('./hud_text');
-const { paintIcon } = require('./icons');
+const { paintIcon, paintCard } = require('./icons');
 const shaders = require('./shaders');
 const { TurnSignal } = require('./turn');
 const calibration = require('./calibration');
@@ -302,7 +304,7 @@ const CLAIM_MS = 1000;
 
 const BOOST_SCALE = { factor: 0.01, offset: 0, invalid: 255 }; // see header comment
 // the widget types drawn as pixels (image layers, packed into sheets unless "own": true); the rest are shaders
-const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, swatchimg: true, nav: true, garland: true };
+const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, swatchimg: true, nav: true, garland: true, card: true };
 const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its own status text
 // an image layer is "stalled" until its first pixels reach cluster-render, which after a rebuild takes a second or two
 // through the upload budget: normal. Only one still stalled this long is logged as a problem (and its recovery)
@@ -2137,6 +2139,7 @@ class HudApp {
         else if (w.type === 'nav') this._navCreate(x);
         else if (w.type === 'garland') { x.tw = new Garland.Twinkle(w); this._blit(x, null, Garland.paint(w, x.tw.lvl, null)); }
         else if (w.type === 'icon') this._blit(x, null, paintIcon(w.icon, w.w, w.h, color(t, w.color || 'fg')));
+        else if (w.type === 'card') this._blit(x, null, paintCard(w.w, w.h, color(t, w.fill || 'well'), color(t, w.line || 'accent'), isNum(w.border) ? w.border : 2, isNum(w.radius) ? w.radius : 14));
         else if (w.type === 'sdash' || w.type === 'hexdash' || w.type === 'hexlc') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_geo', w.geo);
