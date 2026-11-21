@@ -1132,9 +1132,17 @@ class HudApp {
     /** The layout name to show now: per drive mode when that's on and known, else the plain setting. */
     _layoutName() {
         if (this.screen && this.screen.yielded) return 'off';
-        if (this.claimBy) return 'off';
+        if (this.claimBy) return this._turnOverClaim() ? 'blinkers' : 'off';
         if (this.vstate.hold()) return 'off';           // the switch-off guard (_vehKeep keeps what is up at 8)
         return this._chosenName();
+    }
+    /**
+     * While Redline (in this same app, or on its own) holds the HUD: keep only the turn-signal arrows up, over its picture
+     * (the "Blinkers only" layout: the automatic turn widget in the HUD window's top corners, clear of Redline's tach),
+     * when "Turn-signal arrows" and "...over Redline's HUD" are on.
+     */
+    _turnOverClaim() {
+        return this.target === 'hud' && this.setting('showTurn') !== false && this.setting('turnWithRedline') === true;
     }
     /** The layout the driver picked for now, before anything that makes us step aside. */
     _chosenName() {
@@ -1265,6 +1273,7 @@ class HudApp {
             : this.driveMode ? ' (' + MODE_NAME[this.driveMode] + ')' : ' (drive mode not seen yet)') : '';
         const what = this.target === 'panel' ? 'cluster' : 'HUD';
         if (this.activeName === 'off' && this.vehHeld) return this.label + ' paused: the car is off or switching on / off (vehicle state ' + this.vstate.text() + '); it comes back when the car is on';
+        if (this.claimBy && this.activeName === 'blinkers') return this.label + ': ' + this.claimBy.charAt(0).toUpperCase() + this.claimBy.slice(1) + ' has the HUD; the turn-signal arrows show over it';
         if (this.activeName === 'off' && this.claimBy) return this.label + ' off: ' + this.claimBy.charAt(0).toUpperCase() + this.claimBy.slice(1) + ' has the HUD; it comes back when that app lets go';
         if (this.activeName === 'off' && this.screen.yielded) return this.label + ' off: ' + this.screen.otherName + ' has the screen, pick one here to take it back';
         if (this.activeName === 'off') return this.label + ' off' + mode + ": BMW's own " + what + ' shows';

@@ -182,3 +182,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   the top (y 46) and along the bottom (y 644), blue to white to red, fading at their ends, darker at the screen's very
   edges. hexlc is now see-through round the hexagon (it was opaque near-black there). The strip a touch lighter.
   See-through in the map's window like the hexagon's layer.
+
+## HUD Widgets 0.18.0 — turn-signal arrows over Redline's HUD
+- New setting "Turn-signal arrows over Redline's HUD" (on by default, in the page's Settings with "Turn-signal arrows"):
+  while Redline's HUD has the HUD (Sport by default), the widgets no longer step aside completely: the "Blinkers only"
+  layout stays up, so the green arrows flash in the HUD window's top corners over Redline's picture (clear of its
+  tach). shared/hud.js _turnOverClaim; the status line says so.
