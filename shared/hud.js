@@ -313,14 +313,14 @@ const LAYER_BUDGET = 8;          // cluster-render's limit per client connection
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
-const TICK_MS = 50;              // 20 Hz: shift bar and gauges
+const TICK_MS = 16;              // ~60 Hz: shift bar and gauges (uniforms only, sent only when they change; was 50)
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
 // the readouts that move while driving (speed, gear, revs, boost) re-draw twice as often, so they don't trail the car;
 // each change still sends only its changed rect (a digit or two), well inside the upload budget
-const LIVE_TEXT_MS = 100;
+const LIVE_TEXT_MS = 33;        // the speed, gear, rpm texts: 30 a second, cluster-render's image limit (was 100)
 const LIVE_TOKENS = /\{\{(speed|speed2|rpm|rpm10|gear|gearnum|gearInD|stage|boost)\}\}/;
 // the rev counter's smoothing (BMW-like, hides idle wobble): 60 ms, was 120 ms (felt late on the car, Nov 20 2026)
-const RPM_TAU_MS = 60;
+const RPM_TAU_MS = 35;
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
 const MODE_KEY = { comfort: 'inComfort', sport: 'inSport', eco: 'inEco' };
 const TYRE_CORNERS = ['FL', 'FR', 'RL', 'RR'];

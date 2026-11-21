@@ -141,3 +141,10 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   opaque cards now cover them (new image widget "card", icons.js paintCard; theme roles card / cardLine). The middle
   one shows what's playing (title, artist), else the clock; the right one the drive mode in its colour. The clock moved
   from the strip onto the card. The map now starts fading at x 690, past BMW's own "mph" left of it.
+
+## Cluster Themes 0.23.3 / HUD Widgets 0.17.1 — faster, no cover cards
+- Faster: the gauges, bars and shift lights update up to 60 times a second (TICK_MS 50 -> 16; a uniform goes only
+  when its value changes), the speed / gear / rpm texts 30 times a second (LIVE_TEXT_MS 100 -> 33, cluster-render's
+  limit for an image layer), the rev smoothing 60 -> 35 ms. CPU on the bench unchanged.
+- Live Cockpit Map: 0.23.2's cards over BMW's map-view boxes are gone again (they only hid the boxes); the clock is
+  back in the strip, the drive mode back over the hexagon. The dark-map tone stays.
