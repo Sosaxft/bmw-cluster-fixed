@@ -55,6 +55,11 @@
  *             "barH" bar height, "top" room for the marks above it, "slant" px, "over" rpm past the
  *             redline's thousand the scale runs to (1000: a 7000 redline gives 0..8)
  *   lights    effect layer; shaders.js lights, shift lights filling from "from" rpm (3000) up to the shift point
+ *   mapfade   effect layer, class overlay: over the map's window ("hole", "holeWhen": "mapUp"), the map's edges
+ *             fading into the theme's colours round it ("edge": 6 roles or [r, g, b], see the code) over "fade"
+ *             [l, t, r, b] px; nothing while
+ *             the map is down. For a map drawn over the theme (the layout window, waze.js), which no theme layer under
+ *             it can shade.
  *   card      image layer; an opaque rounded card (icons.js paintCard): "fill" and "line" roles, "border" px, "radius"
  *             px; static. Covers what shows through a map window (BMW's own map-view boxes), readouts go on it.
  *   badge     image layer; a rounded tag with text: "tone" verdict (the last shift's grade colour) or cold
@@ -1930,6 +1935,9 @@ class HudApp {
         }
         this.problem = null;
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
+        // the layout's window for the map on the panel ("mapWindow" [x, y, w, h]): written as the layout window, so a
+        // Waze on Cluster that reads it (eroobeeroo's) draws the map over the theme there (waze.js)
+        if (this.waze) this.waze.setWindow(this.target === 'panel' && Array.isArray(layout.mapWindow) ? layout.mapWindow : null);
         // "mapLive" holds only while nothing else changes with the map (a widget toggled on mapUp needs the rebuild)
         this.mapLive = layout.mapLive === true && !layout.widgets.some((w) => typeof w.toggle === 'string' && w.toggle.indexOf('mapUp') >= 0);
         this._wazeWant();
@@ -2181,6 +2189,14 @@ class HudApp {
             c.uniform(ref, 'u_road', w.road ? [w.road[0], w.road[1], 0, 1] : [0, 1, 0, 0]);
             // Live Cockpit Map: the map fades out over "fade" px a side (1 px each: a sharp edge, as before)
             if (w.type === 'hexlc') c.uniform(ref, 'u_fade', w.fade || [1, 1, 1, 1]);
+        } else if (w.type === 'mapfade') {
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_hole', this._hole(w));
+            c.uniform(ref, 'u_fade', w.fade || [60, 40, 60, 40]);
+            // "edge": the theme's colours round the window, [left top, left bottom, middle top, middle bottom, right top,
+            // right bottom] (roles or [r, g, b])
+            const e = w.edge || ['bg', 'bg', 'bg', 'bg', 'bg', 'bg'];
+            ['u_lt', 'u_lb', 'u_ct', 'u_cb', 'u_rt', 'u_rb'].forEach((u, k) => c.uniform(ref, u, rgba(color(t, e[k]))));
         } else if (w.type === 'mview') {
             // the left scale's line: points (layer px) and the arc length at each (the shader mirrors it for the right)
             const pts = [], cum = [];

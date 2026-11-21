@@ -154,3 +154,15 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   3 s: the targets, what each of the KOMBI's slots holds, the guide hold, the budget (layer lines left out), to
   photograph with a theme on and with it off. For the black boxes over the map that show only while a theme is on
   (Nov 21 2026). shared/hud.js clusterDiagLines, page.js settingsTab.
+
+## Cluster Themes 0.24.0 — the map drawn over the theme (no BMW map screen, no M display boxes)
+- The dark boxes over the map (BimmerCode's M display) are BMW's own map screen, which the KOMBI draws over the map in
+  its map slot, under any theme: a theme's window onto that slot shows them. Fix, as ZEKAI's ID7 Cluster Themes does:
+  the layout window (eroobeeroo's Waze on Cluster 0.9.107+, layout_window.h): while a map theme shows, waze.js keeps
+  /dev/shm/cluster-info/map_window.txt ("panel X Y W H", a lease, touched every second, removed when not wanted), and
+  that Waze on Cluster draws the map on the panel in that rect, ABOVE the theme, where nothing of BMW's shows.
+  waze.js sends no "start" while it holds the window; the status reads "Map showing over the theme".
+- Live Cockpit Map: its map window is 764x337 between the speed and the gear (the map's own shape, clear of the gauges;
+  layout "mapWindow"), and a new overlay "mapfade" (shaders.js, 216 tokens) fades the map's edges into the theme's
+  own colours round it. With robertnisipeanu's 0.11 (no window support) the theme opens the same window onto the map
+  slot, as before.

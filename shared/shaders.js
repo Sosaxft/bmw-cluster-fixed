@@ -2084,6 +2084,32 @@ void main() {
 }
 `;
 
+// The map's edges over the theme (hud.js widget "mapfade"): a map drawn ABOVE the theme in its window (the layout
+// window, waze.js) can't be shaded by the theme's own layers, so this overlay sits on it and fades its edges into the
+// theme's own colours round it (six: left, middle, right, each top and bottom) over u_fade px a side. Nothing while u_hole is closed.
+const MAPFADE = `precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_hole;
+uniform vec4 u_fade;
+uniform vec4 u_lt;
+uniform vec4 u_lb;
+uniform vec4 u_ct;
+uniform vec4 u_cb;
+uniform vec4 u_rt;
+uniform vec4 u_rb;
+void main() {
+    vec2 p = v_uv * u_size;
+    float l = p.x - u_hole.x, t = p.y - u_hole.y, r = u_hole.x + u_hole.z - p.x, b = u_hole.y + u_hole.w - p.y;
+    float m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, t) * smoothstep(0.0, u_fade.z, r) * smoothstep(0.0, u_fade.w, b);
+    float a = u_hole.z > 0.0 ? 1.0 - m : 0.0;
+    // the theme's own colour round the window: bluer on the left, redder on the right, darker lower down
+    vec3 L = mix(u_lt.rgb, u_lb.rgb, v_uv.y), C = mix(u_ct.rgb, u_cb.rgb, v_uv.y), R = mix(u_rt.rgb, u_rb.rgb, v_uv.y);
+    vec3 col = mix(mix(L, C, smoothstep(0.0, 0.45, v_uv.x)), R, smoothstep(0.55, 1.0, v_uv.x));
+    gl_FragColor = vec4(col, a);
+}
+`;
+
 const TURN = `// HUD turn-signal arrows (hud.js widget type "turn", shared/turn.js): a filled arrow at each end of the layer, pointing
 // out, in u_on while that side's lamp is lit (u_lit) with a soft glow; nothing otherwise (black shows as nothing on the
 // HUD). GLSL ES 1.00, v_uv (0,0) is the top-left.
@@ -2129,4 +2155,4 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN };
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, mapfade: MAPFADE };

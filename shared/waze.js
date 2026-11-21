@@ -28,6 +28,13 @@
  * Map view would. Its status line says so with a "cluster" field (1: Show on includes the cluster). With that field
  * this sends nothing: the map is up while state is "showing", target "map" and cluster 1. (Hosting it in our own scene
  * instead needs a RAMSES scene file, off on every car as cluster-render ships.)
+ *
+ * The layout window (eroobeeroo's Waze on Cluster 0.9.107+, layout_window.h; ZEKAI's ID7 Cluster Themes uses it too):
+ * a theme that writes /dev/shm/cluster-info/map_window.txt, one line "panel X Y W H", and keeps it fresh (touched at
+ * least every 3 s) gets the map drawn on the panel itself in that rect, ABOVE the theme. In the map slot under a theme
+ * the KOMBI draws its own map screen over the map (its speed readout, shading, and with BimmerCode's M display dark
+ * boxes): over the theme none of that shows. The file is a lease: made with O_EXCL, taken over from another app only
+ * when stale (5 s, ZEKAI's rule), removed when we stop wanting it. Harmless where the map app doesn't read it.
  */
 const fs = require('fs');
 const net = require('net');
@@ -39,6 +46,9 @@ const POLL_MS = 1000;
 const STALE_MS = 10000;          // a status file older than this: the service isn't running
 const RETRY_MS = 5000;           // between two sends (busy, error, or waiting for the status to show the switch)
 const LINGER_MS = 800;           // how long we stay connected after the command (its answer, then close)
+
+const WINDOW_PATH = '/dev/shm/cluster-info/map_window.txt';
+const WINDOW_STALE_MS = 5000;     // another app's window file older than this is taken over
 
 class Waze {
     /**
@@ -61,6 +71,57 @@ class Waze {
         this.moved = false;          // we put it on the panel (so we put it back)
         try { this.moved = JSON.parse(fs.readFileSync(this.memo, 'utf8')).moved === true; } catch (e) { /* first run */ }
         this.lastText = null;
+        this.windowPath = process.env.WAZE_WINDOW || opts.window || WINDOW_PATH;
+        this.window = null;          // the theme's window for the map, [x, y, w, h] on the panel, or null
+        this.windowFd = null;        // our lease on the window file
+        this.windowLine = null;
+        this.windowWarned = false;
+    }
+
+    /** The active theme's window for the map on the panel ([x, y, w, h]), or null: written as the layout window. */
+    setWindow(rect) {
+        const line = rect ? 'panel ' + rect.map((v) => Math.round(v)).join(' ') : null;
+        if (line === this.windowLine) return;
+        this._release();
+        this.window = rect || null;
+        this.windowLine = line;
+        this._lease();
+    }
+
+    /** Hold (and touch) the window file while the map is wanted and the theme has a window; else let it go. */
+    _lease() {
+        if (!this.wanted || !this.windowLine) return this._release();
+        try {
+            if (this.windowFd === null) {
+                const dir = path.dirname(this.windowPath);
+                try { fs.mkdirSync(dir, 0o1777); fs.chmodSync(dir, 0o1777); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+                try {
+                    this.windowFd = fs.openSync(this.windowPath, 'wx', 0o644);
+                } catch (e) {
+                    if (e.code !== 'EEXIST') throw e;
+                    const st = fs.lstatSync(this.windowPath);
+                    if (!st.isFile() || Date.now() - st.mtimeMs < WINDOW_STALE_MS) { this.windowHeldBy = 'another app'; return; }
+                    fs.unlinkSync(this.windowPath);
+                    this.windowFd = fs.openSync(this.windowPath, 'wx', 0o644);
+                }
+                fs.writeSync(this.windowFd, this.windowLine + '\n');
+                try { fs.fchmodSync(this.windowFd, 0o644); } catch (e) { /* best effort */ }
+                this.windowHeldBy = null;
+                this.log.info('waze: map window ' + this.windowLine);
+            }
+            const now = new Date();
+            fs.futimesSync(this.windowFd, now, now);
+        } catch (e) {
+            if (!this.windowWarned) { this.windowWarned = true; this.log.warn('waze: map window file: ' + e.message); }
+            this._release();
+        }
+    }
+
+    _release() {
+        if (this.windowFd === null) return;
+        try { fs.closeSync(this.windowFd); } catch (e) { /* closed */ }
+        this.windowFd = null;
+        try { fs.unlinkSync(this.windowPath); } catch (e) { /* gone */ }
     }
 
     start() {
@@ -71,6 +132,7 @@ class Waze {
     /** Stop polling; if we moved the map, ask once for it back on "map" (best effort: the process may be exiting). */
     stop() {
         clearInterval(this.timer);
+        this._release();
         if (this.moved && this.st && this.st.target === 'panel') this._send('map');
     }
 
@@ -80,6 +142,7 @@ class Waze {
         if (on === this.wanted) return;
         this.wanted = on;
         this.nextTry = 0;
+        this._lease();
         this._sync();
     }
 
@@ -90,10 +153,11 @@ class Waze {
         if (s.state === 'unsupported') return { text: 'Waze on Cluster: this car isn\'t supported', up: false, ok: false };
         if (s.state === 'off') return { text: 'Waze map is turned off in the Waze app', up: false, ok: false };
         if (!this.wanted) return { text: 'Off. Waze shows the map in BMW\'s own map view', up: false, ok: true };
+        if (this.windowFd !== null && s.target === 'panel' && s.state === 'showing') return { text: 'Map showing over the theme', up: true, ok: true };
         if (s.v11) {
             // Maps on cluster 0.11+: the map on the cluster's own map slot, seen through the theme's window
             if (!s.cluster) return { text: 'Maps on cluster: set Show on to Cluster', up: false, ok: false };
-            if (s.state === 'showing') return { text: 'Map showing in the theme', up: true, ok: true };
+            if (s.state === 'showing') return { text: 'Map showing in the theme (under BMW\'s map screen)', up: true, ok: true };
             if (s.state === 'frozen') return { text: 'Map frozen, waiting for the phone', up: false, ok: false };
             if (s.state === 'error') return { text: 'Maps on cluster reports an error', up: false, ok: false };
             return { text: 'Waiting for the phone\'s map (Central display area: Map view)', up: false, ok: true };
@@ -110,6 +174,7 @@ class Waze {
     }
 
     _poll() {
+        this._lease();
         fs.stat(this.statusPath, (err, st) => {
             if (err || Date.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
@@ -137,6 +202,7 @@ class Waze {
         const s = this.st;
         if (this.sending || Date.now() < this.nextTry || !s) return;
         if (s.state === 'unsupported' || s.state === 'off' || s.v11) return;   // 0.11+: nothing to ask for
+        if (this.windowFd !== null) return;      // the layout window moves it (a map app that reads it)
         if (this.wanted && s.target !== 'panel') this._send('panel');
         else if (!this.wanted && this.moved && s.target === 'panel') this._send('map');
     }
