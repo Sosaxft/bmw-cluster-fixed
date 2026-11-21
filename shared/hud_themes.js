@@ -63,6 +63,17 @@ const THEMES = {
         ink: [12, 12, 14, 255], accent: [60, 215, 255, 255], well: [0, 0, 0, 255], faint: [96, 110, 135, 255],
         sblue: [120, 170, 245, 255], spink: [236, 140, 140, 255], sred: [235, 60, 70, 255],
     },
+    // Hex Map (layout hexmap.json, tools/gen_hexmap.py): black, a white hexagon frame glowing red to orange, the map inside.
+    hexdash: {
+        name: 'Hex Map',
+        fg: [246, 244, 240, 255], dim: [176, 166, 156, 255], track: [90, 70, 60, 255], arc: [255, 122, 40, 255],
+        glow: 0, stripe: false,
+        bar: { low: [255, 122, 40], mid: [255, 122, 40], high: [255, 42, 42], midAt: 'shift' },
+        rev: { from: [232, 64, 30], to: [232, 64, 30] },
+        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [246, 244, 240, 255], head: [226, 228, 232, 255],
+        ink: [12, 12, 14, 255], accent: [255, 122, 40, 255], well: [0, 0, 0, 255], faint: [112, 102, 94, 255],
+        hscale: [222, 214, 206, 255], horange: [255, 132, 52, 255],
+    },
     // M cluster look (layout m.json, after design/photos/ref-m8-cluster.png): black, white numbers with a chrome
     // fade, M red needles and setup bars. Extra roles: redTrack, chrome (bottom of a chrome fade), grey / grey2
     // (the dim gear number's fade), faint.

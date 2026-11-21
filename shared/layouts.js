@@ -29,6 +29,7 @@ const TYPES = {
     segbar: ['signal', 'max'],
     mdash: [],
     sdash: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
+    hexdash: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
     mview: ['path', 'scale', 'dial', 'dialAng', 'line'],
     vdash: ['tach', 'segs'],
     mtach: ['side', 'y0', 'y8', 'ym', 'xm', 'kTop', 'kBot', 'wBot', 'wTop'],

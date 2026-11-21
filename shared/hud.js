@@ -97,6 +97,10 @@
  *             "ticks" [speed, rpm], "rpmMax" (speed follows SPEED_SCALE), "fuelSeg" / "oilSeg" [fullX, fullY,
  *             emptyX, emptyY], "strip" [left end x, y, h, slant], "topEnd" x; the middle is black, and the map
  *             window is cut see-through while "holeWhen" is on ("hole", "holeInset", "holeRadius" as fill)
+ *   hexdash   effect layer; the Hex Map theme (shaders.js hexdash, layout made by tools/gen_hexmap.py): the same keys and
+ *             uniforms as sdash, but both brackets closed into a hexagon by their top / bottom runs (topEnd), red to orange,
+ *             the map cut see-through to the hexagon's inside only (and never past "hole"; "holeRadius" is the inset past
+ *             the inner line), the road kept inside the hexagon, "strip" [outer x, y, thickness, gap] thin ledge lines.
  *   segbar    effect layer; "max" segments, the first round(signal) lit (e.g. "setupLevel:engine"), "slant" px
  *   icon      image layer; a line icon from icons.js ("icon": gauge, shock, wheel, cog, stack, therm, oilcan, fuel)
  *   arc also takes "start" and "sweep" in degrees (clockwise from 12 o'clock; negative = anticlockwise)
@@ -2108,7 +2112,7 @@ class HudApp {
         else if (w.type === 'nav') this._navCreate(x);
         else if (w.type === 'garland') { x.tw = new Garland.Twinkle(w); this._blit(x, null, Garland.paint(w, x.tw.lvl, null)); }
         else if (w.type === 'icon') this._blit(x, null, paintIcon(w.icon, w.w, w.h, color(t, w.color || 'fg')));
-        else if (w.type === 'sdash') {
+        else if (w.type === 'sdash' || w.type === 'hexdash') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_geo', w.geo);
             c.uniform(ref, 'u_k', w.k);
@@ -2711,7 +2715,7 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [q]);
             if (w.peak) x.c.uniform(x.ref, 'u_peak', [pk > q ? pk : -1]);
-        } else if (w.type === 'sdash') {
+        } else if (w.type === 'sdash' || w.type === 'hexdash') {
             const us = this.setting('units') === 'us';
             const sp = this._raw('speed'), rpm = this._raw('rpm'), fuel = this._raw('fuel'), oil = this._raw('oil');
             const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
