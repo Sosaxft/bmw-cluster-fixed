@@ -1391,7 +1391,8 @@ class HudApp {
             this._diagT = setInterval(() => this._guard('diag', () => { ask(); this._status(); }), 3000);
         }
         const run = this._diagRun || {};
-        const out = ['Black-box check: ' + (run.phase || '--') + '. A line marked * differs between the two.'];
+        const out = ['Black-box check: ' + (run.phase || '--') + '. A line marked * differs between the two.',
+            'Revs from the car: ' + (this.rpmS ? this.rpmS.rate.toFixed(1) + ' readings a second' : 'none yet')];
         const mark = (l, other) => (other && other.indexOf(l) < 0 ? '* ' : '  ') + l;
         out.push('With the theme up:');
         (run.on || ['(reading)']).slice(0, 9).forEach((l) => out.push(mark(l, run.off)));
@@ -2696,13 +2697,25 @@ class HudApp {
         return this.tripMs >= 60000 ? this.tripKm / (this.tripMs / 3600000) : null;
     }
 
-    /** BMW-like tach: a RPM_TAU_MS (60 ms) filter, and a readout that moves in 50 rpm steps, only by 40 rpm or more. */
+    /** BMW-like tach: a RPM_TAU_MS (35 ms) filter, and a readout that moves in 50 rpm steps, only by 40 rpm or more.
+     *  The car hands the head unit its revs only a few times a second (the cluster gets them straight off the engine),
+     *  so between two readings the revs carry on at the rate of the last two, for at most one reading's gap and 250 ms:
+     *  the needle moves with the engine instead of stepping behind it ("rpms still slow and delayed", Nov 22 2026). */
     _smoothRpm(now) {
         const test = this._testRpm(now);
-        const raw = isNum(test) ? test : this.car.data().rpm;
+        let raw = isNum(test) ? test : this.car.data().rpm;
         const dt = this.lastTickT ? Math.min(500, now - this.lastTickT) : 0;
         this.lastTickT = now;
-        if (!isNum(raw)) { this.rpmF = null; this.rpmShown = null; return; }
+        if (!isNum(raw)) { this.rpmF = null; this.rpmShown = null; this.rpmS = null; return; }
+        const S = this.rpmS || (this.rpmS = { v: raw, t: now, slope: 0, gap: 100, n: 0, rateT: now, rate: 0 });
+        if (raw !== S.v) {
+            const gap = Math.max(16, now - S.t);
+            S.slope = gap < 600 ? Math.max(-12, Math.min(12, (raw - S.v) / gap)) : 0;   // rpm a ms, at most 12000 rpm/s
+            S.gap = Math.min(250, gap); S.v = raw; S.t = now; S.n++;
+        }
+        if (now - S.rateT >= 2000) { S.rate = S.n * 1000 / (now - S.rateT); S.n = 0; S.rateT = now; }
+        // carried on only within one reading's gap: no new reading after that, the revs hold where the car said
+        if (!isNum(test) && raw > 0 && now - S.t <= S.gap) raw = Math.max(0, Math.min(9000, raw + S.slope * (now - S.t)));
         this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / RPM_TAU_MS)) : raw;
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
     }

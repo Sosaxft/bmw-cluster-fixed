@@ -260,3 +260,11 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   positions u_p, a name cluster-render keeps for its own projection matrix, so it did not link and drew nothing. Renamed
   u_pos. The bench now refuses a shader declaring any of the renderer's names (u_mvp, u_mv, u_m, u_v, u_p, u_normal) as
   anything but a mat4, as the car does, so this cannot pass the bench again.
+
+## Cluster Themes 0.26.3, HUD Widgets 0.18.2 — revs that move with the engine
+- "Rpms still look slow and delayed" (Nov 22 2026). The head unit gets the revs from the car only a few times a second
+  (BMW's own cluster reads them straight off the engine), so even read as often as it can be, the tach stepped behind.
+  Between two readings the revs now carry on at the rate of the last two (at most 12000 rpm/s), for at most one
+  reading's gap and 250 ms, then hold where the car said; the 35 ms smoothing stays. The needle and the readouts move
+  with the engine instead of a step behind it.
+- "Black-box check" (Settings) also shows how many revs readings a second the car sends.
