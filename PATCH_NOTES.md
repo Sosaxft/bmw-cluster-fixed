@@ -283,3 +283,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   330i's to start), held until the car's next reading arrives, instead of waiting a reading or two for the blip or drop.
 - The carry-forward between readings only uses a rate two readings in a row agree on (the gentler of the two), and none
   for 400 ms after a shift, so a step (a shift, a blip) no longer overshoots and swings back.
+
+## Cluster Themes 0.26.6, HUD Widgets 0.18.5 — the tach glides
+- "Better, but going up and coming back down it's still choppy" (video Nov 22 2026). The needle used to land on each
+  reading in 35 ms and wait for the next: stair steps. It now glides over about 0.7 of the gap between the car's
+  readings (35..110 ms), and the carry-on runs that much further ahead so a steady climb or fall costs no lag.
+  Simulated on readings every 100-200 ms with jitter: about half the frame-to-frame jerk of 0.26.5 at the same error.

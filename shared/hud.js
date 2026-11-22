@@ -2751,10 +2751,14 @@ class HudApp {
             S.k[g] = S.k[g] ? S.k[g] + (raw / sp - S.k[g]) * 0.05 : raw / sp;
         }
         if (S.jump && (S.t !== S.jump.t || now - S.jump.at > 600)) S.jump = null;   // the car's own reading has come
-        // between readings the revs carry on, within one reading's gap; after that they hold where the car said
+        // Between readings the revs carry on, within one reading's gap (after that they hold where the car said), and
+        // the needle glides to them over about 0.7 of a reading's gap (35..110 ms) instead of landing in 35 ms and waiting:
+        // no stair steps going up or coming down ("still choppy", Nov 22 2026). The carry-on runs that much further
+        // ahead, so on a steady climb the glide costs no lag.
+        const tau = isNum(test) ? RPM_TAU_MS : Math.max(RPM_TAU_MS, Math.min(110, S.gap * 0.7));
         if (S.jump) raw = S.jump.rpm;
-        else if (!isNum(test) && raw > 0 && now - S.t <= S.gap && now - S.gearAt > 400) raw = Math.max(0, Math.min(9000, raw + S.slope * (now - S.t)));
-        this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / RPM_TAU_MS)) : raw;
+        else if (!isNum(test) && raw > 0 && now - S.gearAt > 400) raw = Math.max(0, Math.min(9000, raw + S.slope * Math.min(now - S.t + tau, S.gap + tau)));
+        this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / tau)) : raw;
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
     }
 
