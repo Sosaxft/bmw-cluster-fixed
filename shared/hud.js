@@ -455,10 +455,14 @@ const SETUP = {
     comfort:   { engine: 'COMFORT', chassis: 'COMFORT', steering: 'COMFORT', gearbox: 'COMFORT' },
     sport:     { engine: 'SPORT', chassis: 'SPORT', steering: 'SPORT', gearbox: 'SPORT' },
     sportplus: { engine: 'SPORT PLUS', chassis: 'SPORT', steering: 'SPORT', gearbox: 'SPORT PLUS' },
+    // Comfort Plus: every row says so; the two three-step rows (engine, chassis) on their second step (SETUP_LEVEL_BY)
+    comfortplus: { engine: 'COMFORT PLUS', chassis: 'COMFORT PLUS', steering: 'COMFORT PLUS', gearbox: 'COMFORT PLUS' },
     // the car reports only that an Individual setup is on, not what each part is set to (no signal found yet)
     individual: { engine: 'INDIVIDUAL', chassis: 'INDIVIDUAL', steering: 'INDIVIDUAL', gearbox: 'INDIVIDUAL' },
 };
 const SETUP_LEVEL = { EFFICIENT: 1, COMFORT: 1, SPORT: 2, 'SPORT PLUS': 3, INDIVIDUAL: 0 };
+// a level that differs by row: Comfort Plus is the second of engine's and chassis's three steps, the first of the others' two
+const SETUP_LEVEL_BY = { 'COMFORT PLUS': { engine: 2, chassis: 2, steering: 1, gearbox: 1 } };
 
 function driveModeOf(raw) {
     let v = raw;
@@ -1744,7 +1748,10 @@ class HudApp {
             return isNum(d.rpm) ? Math.max(0, d.torque) * d.rpm / 9549 / (e.powerKw || 285) * 100 : null;
         }
         if (name === 'mediaPct') { const e = this._mediaElapsed(); return e === null ? null : e / this.media.total * 100; }   // the song's progress
-        if (name.indexOf('setupLevel:') === 0) { const s = this._setup(); return s ? SETUP_LEVEL[s[name.slice(11)]] || 0 : 0; }
+        if (name.indexOf('setupLevel:') === 0) {
+            const s = this._setup(), part = name.slice(11), lv = s && s[part];
+            return lv ? (SETUP_LEVEL_BY[lv] ? SETUP_LEVEL_BY[lv][part] : SETUP_LEVEL[lv]) || 0 : 0;
+        }
         const d = this.car.data();
         return Object.prototype.hasOwnProperty.call(d, name) ? d[name] : null;
     }
@@ -1770,7 +1777,8 @@ class HudApp {
     _setup() {
         if (!this.driveMode) return null;
         if (this.driveVariant === 'individual') return SETUP.individual;
-        return SETUP[this.driveMode === 'sport' && this.driveVariant === 'plus' ? 'sportplus' : this.driveMode];
+        if (this.driveVariant === 'plus') return SETUP[this.driveMode === 'sport' ? 'sportplus' : this.driveMode === 'comfort' ? 'comfortplus' : this.driveMode];
+        return SETUP[this.driveMode];
     }
 
     /** {{token}} -> display text. */

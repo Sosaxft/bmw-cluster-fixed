@@ -294,3 +294,8 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - M with the map in the theme (car photo Nov 22 2026): the window showed BMW's own map-screen speed readout cut off at
   its left edge, and BMW's map frame at its corners, in a hard rectangle. It now starts at x 716, past that readout,
   and fades in from the dash over 70 px with 60 px corners (new mdash "holeFeather").
+
+## Cluster Themes 0.26.8 — M's setup rows in Comfort Plus
+- In Comfort Plus every setup row on the right says COMFORT PLUS (it said COMFORT), and the two three-step rows
+  (engine, chassis) light their second step; steering and gearbox stay on their first. The rows' boxes are 200 px wide
+  so COMFORT PLUS fits.
