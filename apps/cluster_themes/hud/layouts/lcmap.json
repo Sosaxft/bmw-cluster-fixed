@@ -27,9 +27,9 @@
         0.85
       ],
       "hole": [
-        690,
+        600,
         120,
-        814,
+        720,
         480
       ],
       "holeOver": [
@@ -41,9 +41,9 @@
       "holeWhen": "mapUp",
       "holeInset": 0,
       "fade": [
-        90,
+        150,
         60,
-        120,
+        150,
         50
       ]
     },
@@ -98,9 +98,9 @@
       ],
       "topEnd": 660,
       "hole": [
-        690,
+        600,
         120,
-        814,
+        720,
         480
       ],
       "holeOver": [
@@ -113,16 +113,16 @@
       "holeInset": 0,
       "holeRadius": 6,
       "fade": [
-        90,
+        150,
         60,
-        120,
+        150,
         50
       ],
       "scrim": [
-        505,
-        1490,
+        560,
+        1360,
         336,
-        172
+        190
       ]
     },
     {
@@ -510,7 +510,7 @@
       "type": "text",
       "class": "overlay",
       "z": 5,
-      "x": 372,
+      "x": 427,
       "y": 305,
       "w": 266,
       "h": 62,
@@ -524,7 +524,7 @@
       "type": "text",
       "class": "overlay",
       "z": 5,
-      "x": 455,
+      "x": 510,
       "y": 374,
       "w": 100,
       "h": 25,
@@ -538,7 +538,7 @@
       "type": "text",
       "class": "overlay",
       "z": 5,
-      "x": 1404,
+      "x": 1274,
       "y": 305,
       "w": 172,
       "h": 62,
@@ -600,7 +600,8 @@
       "text": "{{range}}",
       "font": "u_small",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "stripTwin": true
     },
     {
       "id": "f_range_u",
@@ -614,7 +615,8 @@
       "text": "{{u:distLc}}",
       "font": "u_cap",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "stripTwin": true
     },
     {
       "id": "f_empty",

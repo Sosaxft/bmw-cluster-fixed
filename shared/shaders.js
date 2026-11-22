@@ -2032,25 +2032,22 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, float 
 // a slanted bar from the empty end b to the full end a, square-ended and cut into short segments (as BMW's), with a
 // tick beside it halfway
 vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
+    // BMW's: a slim even bar on a faint track, lit solid to the value (oil blue while cold, red when hot; fuel red when
+    // low), three short marks on the numbers' side (empty, half, full)
     vec2 a = s.xy, b = s.zw;
     float L = length(a - b);
-    vec2 dir = (a - b) / L, nrm = vec2(-dir.y, dir.x);
-    float al = dot(p - b, dir), side = dot(p - b, nrm);
-    if (abs(side) > 30.0 || al < -30.0 || al > L + 30.0) return c;
+    vec2 dir = (a - b) / L;
+    float al = dot(p - b, dir), side = dot(p - b, vec2(-dir.y, dir.x)) * (zones > 0.5 ? -1.0 : 1.0);
+    if (abs(side) > 20.0 || al < -20.0 || al > L + 20.0) return c;
     float h = al / L;
-    float body = cov(abs(side) - 5.5) * cov(-al) * cov(al - L);
-    float seg = cov(abs(mod(al, 9.0) - 4.5) - 3.0);      // 6 px on, 3 px off
-    body *= seg;
+    float body = cov(abs(side) - 3.5) * cov(-al) * cov(al - L);
     vec3 col = vec3(0.97);
-    if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
-    c = over(vec4(0.62, 0.66, 0.74, 0.32 * body), c);
+    if (val < (zones > 0.5 ? 0.3 : 0.12)) col = zones > 0.5 ? vec3(0.3, 0.62, 1.0) : vec3(1.0, 0.22, 0.24);
+    if (zones > 0.5 && val > 0.88) col = vec3(1.0, 0.22, 0.24);
+    c = over(vec4(0.6, 0.64, 0.72, 0.26 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
-    if (zones > 0.5) c = over(vec4(0.2, 0.55, 1.0, body * step(h, 0.1)), c);
-    float q = clamp(floor(al / L * 4.0 + 0.5), 0.0, 4.0), mk = abs(al - q * 0.25 * L);
-    float reach = mod(q, 2.0) < 0.5 ? 16.0 : 12.0;
-    c = over(vec4(1.0, 1.0, 1.0, 0.9 * cov(mk - 1.0) * cov(abs(side) - reach) * cov(-(abs(side) - 7.5))), c);
-    if (zones < 0.5) c = over(vec4(1.0, 0.22, 0.24, 0.9 * cov(abs(side + 9.5) - 1.6) * cov(-al) * cov(al - 0.12 * L)), c);
-    return c;
+    float mk = abs(al - floor(h * 2.0 + 0.5) * 0.5 * L);
+    return over(vec4(1.0, 1.0, 1.0, 0.85 * cov(mk - 1.0) * cov(side - 13.0) * cov(-(side - 6.0))), c);
 }
 
 void main() {
@@ -2068,10 +2065,10 @@ void main() {
         // the map shows through, fading in from the hexagon's inner line (and dimmed outside it), out at the window's
         // edges (u_fade), and gone round the speed and the gear (an oval each), so it never runs under them
         float l = p.x - u_hole.x, tp = p.y - u_hole.y, rr = u_hole.x + u_hole.z - p.x, bt = u_hole.y + u_hole.w - p.y;
-        vec2 sl = (p - u_scrim.xz) / vec2(u_scrim.w, u_scrim.w * 0.4), sr = (p - u_scrim.yz) / vec2(u_scrim.w, u_scrim.w * 0.4);
+        vec2 sl = (p - u_scrim.xz) / vec2(u_scrim.w, u_scrim.w * 0.55), sr = (p - u_scrim.yz) / vec2(u_scrim.w, u_scrim.w * 0.55);
         float m = smoothstep(0.0, u_fade.x, l) * smoothstep(0.0, u_fade.y, tp) * smoothstep(0.0, u_fade.z, rr)
             * smoothstep(0.0, u_fade.w, bt) * mix(0.3, 1.0, smoothstep(-40.0, 70.0, hx))
-            * smoothstep(0.85, 1.7, min(length(sl), length(sr)));   // gone behind the speed and the gear, there above and below them
+            * smoothstep(0.9, 1.35, min(length(sl), length(sr)));   // gone behind the speed and the gear, there above and below them
         c.a *= 1.0 - m;
     }
     // shades: each bracket's colour glows in over the hexagon's inside edge, over the map too (as BMW's own screen)
@@ -2142,6 +2139,8 @@ void main() {
     float r1 = exp(-abs(p.y - u_rails.x) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.x) / 9.0);
     float r2 = exp(-abs(p.y - u_rails.y) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.y) / 9.0);
     c = mix(c, rc, clamp((r1 + r2) * along * u_rails.w, 0.0, 1.0));
+    // darker pockets at the screen's far ends, where BMW's own lights sit (PARK, ...), as on BMW's own screen
+    c *= 1.0 - 0.6 * smoothstep(0.4, 0.47, abs(v_uv.x - 0.5));
     float m = 0.0;
     if (u_hole.z > 0.0) {
         float l = p.x - u_hole.x, t = p.y - u_hole.y, r = u_hole.x + u_hole.z - p.x, b = u_hole.y + u_hole.w - p.y;

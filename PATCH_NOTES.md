@@ -231,3 +231,17 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   2 the theme with BMW's strip gap by the gear letter filled in; 3 one plain full-screen image layer and nothing else,
   the way ZEKAI's themes draw (which show no boxes); 4 BMW's own screen. Which steps show the boxes says what of ours
   sets BMW off.
+
+## Cluster Themes 0.26.0 — BMW's black boxes fixed; Live Cockpit Map's map, gauges and lettering
+- The black boxes: covering BMW's bottom strip is what makes BimmerCode's M display draw them over the middle in D (car
+  photo Nov 22 2026, with "Leave BMW's bottom strip" on: gone). The switch is now on by default, for every theme:
+  BMW's strip shows as it is (its range, clock, street and outside temperature), and a readout of ours that BMW's strip
+  shows already ("stripTwin": Live Cockpit Map's range by the fuel gauge) is left out, so nothing shows twice.
+- Live Cockpit Map's map: the window is centred between the speed and the gear and fades into both the same way (150 px
+  a side, and a soft oval round each number). The speed and the gear moved in (x 560 / 1360, mirrored), over BMW's own
+  map-screen readouts that showed under the theme on the gear side.
+- Darker pockets at the screen's far ends, behind BMW's own lights (PARK), as on BMW's screen, instead of the flat tone.
+- The fuel and oil gauges: slim even bars on a faint track, lit solid (fuel red when low, oil blue when cold, red when
+  hot), three short marks on the numbers' side; no more dashed segments with marks across.
+- Lettering: the D has a straight left side and a rounded right side (it read as a 0), the M is upright with a V, the 4
+  is the squared 4.

@@ -17,8 +17,8 @@ import bake_fonts as B
 OUT = os.path.join(B.APPS, 'cluster_themes', 'hud', 'fonts')
 SS = 4                     # supersampling
 GAP = 0.22                 # letter spacing, x the height (sqText)
-SQ = {'0': 'abcdef', '2': 'abged', '3': 'abgcd', '4': 'g', '5': 'afgcd', '6': 'afgedc', '7': 'a', '8': 'abcdefg',
-      '9': 'abfgcd', '-': 'g', 'S': 'afgcd', 'P': 'abfge', 'N': 'efbc', 'R': 'abfge', 'M': 'efabc', 'D': 'abcdef'}
+SQ = {'0': 'abcdef', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'a', '8': 'abcdefg',
+      '9': 'abfgcd', '-': 'g', 'S': 'afgcd', 'P': 'abfge', 'N': 'efbc', 'R': 'abfge', 'M': 'efbc', 'D': 'abcdef'}
 
 
 WR = 1.15                  # width / height of a digit (bake_sq sets it per font)
@@ -46,22 +46,23 @@ def glyph(d, ch, x, y, h):
          'f': [x, y, t, hh + t / 2], 'b': [x + w - t, y, t, hh + t / 2], 'e': [x, y + hh - t / 2, t, hh + t / 2],
          'c': [x + w - t, y + hh - t / 2, t, hh + t / 2]}
     if ch == 'D':
-        R['a'] = [x, y, w - t, t]; R['d'] = [x, y + h - t, w - t, t]; R['b'] = [x + w - t, y + t, t, hh]
-        R['c'] = [x + w - t, y + hh - t / 2, t, hh - t / 2]
+        # BMW's D: a straight left side and square left corners, the right side rounded off big (car photo Nov 22 2026:
+        # the old D with small chamfers read as a 0)
+        r = min(h * 0.42, w * 0.45)
+        d.rounded_rectangle([x, y, x + w - 1, y + h - 1], radius=r, fill=255, corners=(False, True, True, False))
+        d.rounded_rectangle([x + t, y + t, x + w - 1 - t, y + h - 1 - t], radius=max(r - t, 1), fill=0,
+                            corners=(False, True, True, False))
+        return
     for k in SQ[ch]:
         rect(R[k])
-    if ch == 'D':
-        quad([[x + w - t, y], [x + w, y + t], [x + w - t, y + t]]); quad([[x + w - t, y + h - t], [x + w, y + h - t], [x + w - t, y + h]])
     diag = lambda x0, y0, x1, y1: quad([[x0, y0], [x0 + t * 1.1, y0], [x1, y1], [x1 - t * 1.1, y1]])
     if ch == 'N': diag(x + t * 0.4, y, x + w - t * 0.4, y + h)
     if ch == 'R': diag(x + w * 0.35, y + hh, x + w + t * 0.45, y + h)
-    if ch == 'M': rect([x + w / 2 - t / 2, y, t, hh])
+    if ch == 'M':   # an upright M: both stems full height, a V from the top corners down to the middle
+        quad([[x, y], [x + t * 1.25, y], [x + w / 2 + t * 0.62, y + h * 0.66], [x + w / 2 - t * 0.62, y + h * 0.66]])
+        quad([[x + w - t * 1.25, y], [x + w, y], [x + w / 2 + t * 0.62, y + h * 0.66], [x + w / 2 - t * 0.62, y + h * 0.66]])
     if ch == '7':   # BMW's 7: the stem slants from the top right down to the left of the middle
         quad([[x + w - t, y + t * 0.6], [x + w, y + t * 0.6], [x + w * 0.42 + t * 0.55, y + h], [x + w * 0.42 - t * 0.55, y + h]])
-    if ch == '4':
-        sx = x + w * 0.8 - t
-        rect([sx, y, t, h])
-        quad([[sx - t * 0.9, y], [sx + t * 0.6, y], [x + t * 1.6, y + hh - t / 2], [x, y + hh - t / 2]])
 
 
 def bake_sq(name, h, chars, wr=1.15, tr=0.25, rnd=0.0):

@@ -1992,11 +1992,12 @@ class HudApp {
         // temperature. "Leave BMW's bottom strip clear" is gone again (0.17.7): with the gear letter uncovered BMW draws no
         // black box (car test of 0.17.6), so the switch had nothing left to fix.
         // Copies, since the strip row's connection is set below.
-        // "stripClear" (a test, Nov 21 2026): BMW's whole bottom strip left uncovered (no strip row, no strip covers), to
-        // see whether BMW's black boxes over the middle (BimmerCode's M display) come from covering something there
-        const clear = this.target === 'panel' && this.setting('stripClear') === true;
+        // "stripClear" (on by default since Nov 22 2026): BMW's whole bottom strip left as it is (no strip row, no strip
+        // covers, no readout marked "stripTwin" that BMW's strip shows already). Covering BMW's strip is what makes the M
+        // display (BimmerCode) draw its black boxes over the middle in D: with it clear they are gone (car photo)
+        const clear = this.target === 'panel' && this.setting('stripClear') !== false;
         const shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0))
-            .filter((w) => !(clear && (w.stripRow || /^strip_cover/.test(w.id || ''))))
+            .filter((w) => !(clear && (w.stripRow || w.stripTwin || /^strip_cover/.test(w.id || ''))))
             .map((w) => (w.stripRow ? Object.assign({}, w) : w));
         if (this.target === 'hud' && this.setting('showTurn') !== false && !/calibration/i.test(layout.name || '')
             && !shown.some((w) => ['grid', 'gridlabels', 'swatch', 'swatchimg'].indexOf(w.type) >= 0)) shown.push(Object.assign({}, TURN_WIDGET));

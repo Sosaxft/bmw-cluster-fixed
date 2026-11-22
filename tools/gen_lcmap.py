@@ -33,9 +33,12 @@ MAP = [416, 120, 1088, 480]          # BMW's map window, where waze-on-cluster d
 MAPWIN = [257, 40, 1405, 620]
 # Under the theme (0.11) the window starts past BMW's own speed readout left of the map ("mph", car photo Nov 21 2026:
 # x ~600..712), which BMW's map screen draws there; drawn over the theme (holeOver) nothing of BMW's shows
-HOLE = [690, 120, 814, 480]
-FADE = [90, 60, 120, 50]
-SCRIM = [505, 1490, 336, 172]          # the speed's and the gear's centres x, y; the oval's half width (its height x 0.4)
+# Nov 22 2026 (car photo): the window centred between the speed and the gear, fading in over 130 px a side, so the map
+# meets both the same way; the speed and the gear moved in (x 560 / 1360, mirrored) over BMW's own map-screen readouts
+# under the theme (its "mph" x ~600..712, the M display's dark box x ~1226..1393), each in a soft oval the map fades into
+HOLE = [600, 120, 720, 480]
+FADE = [150, 60, 150, 50]
+SCRIM = [560, 1360, 336, 190]          # the speed's and the gear's centres x, y; the oval's half width (its height x 0.4)
 
 # the Sport theme's brackets, traced off the car (sport.json)
 GEO = [120, 310.7, 604.0, 180]
@@ -86,17 +89,18 @@ widgets += [
     text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
     # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
-    text('speed', 372, 305, 266, 62, '{{speed}}', 'q_big', 'fg'),
-    text('speed_unit', 455, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
-    text('gear', 1404, 305, 172, 62, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
+    text('speed', 427, 305, 266, 62, '{{speed}}', 'q_big', 'fg'),
+    text('speed_unit', 510, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
+    text('gear', 1274, 305, 172, 62, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
     # the fuel and oil gauges' ends and icons (the Sport theme's, kept up with the map as on BMW's screen)
     # the fuel and oil gauges: thick slanted bars (shader), three numbers along each and the icon (as the photo)
     text('f_full', 393, 407, 60, 29, '1', 'u_small', 'fg'),
     text('f_half', 448, 485, 60, 29, '1/2', 'u_small', 'fg'),
     icon('fuel_icon', 'fuel', 512, 485, 22, 26),
     # the range beside the fuel gauge, the oil temperature beside the oil gauge
-    text('f_range', 532, 525, 58, 29, '{{range}}', 'u_small', 'fg', 'right'),
-    text('f_range_u', 593, 527, 30, 25, '{{u:distLc}}', 'u_cap', 'dim', 'left'),
+    text('f_range', 532, 525, 58, 29, '{{range}}', 'u_small', 'fg', 'right', stripTwin=True),
+    text('f_range_u', 593, 527, 30, 25, '{{u:distLc}}', 'u_cap', 'dim', 'left', stripTwin=True),
+    # (stripTwin: left out while BMW's own strip shows, which has the range already)
     text('f_empty', 503, 563, 60, 29, '0', 'u_small', 'fg'),
     text('o_hot', 1467, 407, 60, 29, '{{temp:150}}', 'u_small', 'fg'),
     text('o_mid', 1412, 485, 60, 29, '{{temp:100}}', 'u_small', 'fg'),
