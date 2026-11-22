@@ -89,9 +89,10 @@ widgets += [
     text('mode', 710, 80, 500, 28, '{{mode}}', 'u_mode', 'modeComfort', colorBy='mode'),
     # the drive mode over the hexagon's top, in its colour (BMW's: SPORT red, COMFORT blue, ECO PRO green)
     # inside the hexagon: the speed on the left, the gear on the right (the photo)
-    text('speed', 427, 305, 266, 62, '{{speed}}', 'q_big', 'fg'),
+    # the speed and the gear drawn by the GPU (gtext): a new value is a uniform, no pixel upload to wait behind
+    dict(text('speed', 427, 305, 266, 62, '{{speed}}', 'q_big', 'fg'), type='gtext'),
     text('speed_unit', 510, 374, 100, 25, '{{u:speedLc}}', 'u_cap', 'dim'),
-    text('gear', 1274, 305, 172, 62, '{{gear}}', 'q_big', 'fg', hotWhen='now'),
+    dict(text('gear', 1274, 305, 172, 62, '{{gear}}', 'q_big', 'fg', hotWhen='now'), type='gtext'),
     # the fuel and oil gauges' ends and icons (the Sport theme's, kept up with the map as on BMW's screen)
     # the fuel and oil gauges: thick slanted bars (shader), three numbers along each and the icon (as the photo)
     text('f_full', 393, 407, 60, 29, '1', 'u_small', 'fg'),

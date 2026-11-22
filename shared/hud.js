@@ -132,6 +132,10 @@
  *             widest advance and h = its cell height, logged at creation), and a new value is one uniform
  *             message of glyph codes. "text" tokens as text, "font", "color" role, "align" left | right | center.
  *             Up to 32 cells; only the characters the font has.
+ *   gtext     effect layer (shaders.js gtext): a live readout (the speed, the gear) drawn by the GPU from its font's own
+ *             atlas, proportional, up to 6 characters: a new value is one uniform message and no pixels, so it never
+ *             waits behind image uploads (the car's "really delayed" readouts, Nov 22 2026). Takes "text", "font",
+ *             "color", "align" and "hotWhen" as text; the box should be the font's cell height tall.
  *   meter     effect layer (shaders.js meter): a segmented bar, "signal" between "min" and "max" (raw units: km/h, C,
  *             bar, rpm), "segments" (20), "gap" px (4), "vertical": true fills upward; "colors" [3 roles] lit below
  *             "at"[0] / up to "at"[1] / past it (fractions of the bar), "trackColor" (track); "peak": ms (true = 3 s)
@@ -1081,6 +1085,21 @@ class HudApp {
         this.atlases.set(key, a);
         this.log.info('glyph atlas "' + fontName + '"' + (ci ? ' on connection ' + (ci + 1) : '') + ': ' + chars.length + ' glyphs in ' +
             cellW + 'x' + cellH + ' cells, ' + w + 'x' + h + ' R8 asset, ' + mib(a.bytes) + ' of pixel memory');
+        return a;
+    }
+
+    /** A font's own atlas (hud/fonts) as one R8 asset per connection, for gtext widgets; kept like the glyph atlases. */
+    _fontAsset(fontName, ci) {
+        const key = ci + ':font:' + fontName;
+        if (this.atlases.has(key)) return this.atlases.get(key);
+        const f = textRaster.loadFont(fontName), w = f.width, h = f.alpha.length / f.width;
+        const c = this._clientAt(ci);
+        const ref = c.asset({ target: this.target, format: 'r8', w, h, sampling: 'nearest' });
+        if (!ref) throw new Error('font "' + fontName + '": atlas asset refused (' + w + 'x' + h + ')');
+        c.pixels(ref, null, f.alpha);
+        const a = { ref, c, ci, w, h, bytes: w * h * 2 };
+        this.atlases.set(key, a);
+        this.log.info('font atlas "' + fontName + '"' + (ci ? ' on connection ' + (ci + 1) : '') + ': ' + w + 'x' + h + ' R8 asset, ' + mib(a.bytes) + ' of pixel memory');
         return a;
     }
 
@@ -2197,7 +2216,16 @@ class HudApp {
         const x = { w, ref, c, ci: sheet ? sheet.ci : this._connOf(w), sheet: sheet || null, last: null, lastPaint: 0, px: null };
         this.widgets.set(w.id, x);
         const t = this.theme;
-        if (w.type === 'atext') {
+        if (w.type === 'gtext') {
+            const a = this._fontAsset(w.font, x.ci);
+            x.font = a;
+            c.bind(ref, 'u_font', a.ref);
+            c.uniform(ref, 'u_atlas', [a.w, a.h]);
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_color', rgba(color(t, w.color || 'fg')));
+            c.uniform(ref, 'u_g', new Array(24).fill(0), { type: 'vec4' });
+            c.uniform(ref, 'u_p', new Array(12).fill(0), { type: 'vec2' });
+        } else if (w.type === 'atext') {
             const a = this._atlas(w.font, x.ci);
             x.atlas = a;
             x.cells = Math.max(1, Math.min(32, isNum(w.cells) ? Math.floor(w.cells) : Math.floor(w.w / a.cellW)));
@@ -2681,7 +2709,28 @@ class HudApp {
 
     _update(x, now, force) {
         const w = x.w;
-        if (w.type === 'atext') {
+        if (w.type === 'gtext') {
+            // no paint to wait for: checked every tick, sent the moment the value (or its colour) changes
+            const s = this._shownNow(w) ? String(this._resolve(w.text)).slice(0, 6) : '';
+            let role = w.color || 'fg';
+            if (w.hotWhen && this._shift()[w.hotWhen]) role = 'hot';
+            const key = s + '|' + role;
+            if (!force && key === x.last) return;
+            const roleChanged = !x.last || x.last.split('|')[1] !== role;
+            x.last = key; x.lastPaint = now;
+            const f = textRaster.loadFont(w.font), gl = f.metrics.glyphs, sp = w.spacing || 0;
+            const width = textRaster.measure(s, w.font, sp);
+            let pen = w.align === 'right' ? w.w - width : w.align === 'left' ? 0 : Math.round((w.w - width) / 2);
+            const g = new Array(24).fill(0), p = new Array(12).fill(0);
+            s.split('').forEach((ch, i) => {
+                const q = gl[ch];
+                if (q && q.w) { g.splice(i * 4, 4, q.x, q.y, q.w, q.h); p.splice(i * 2, 2, Math.round(pen + q.ox), 0); }
+                pen += (q ? q.advance : 0) + sp;
+            });
+            if (roleChanged || force) x.c.uniform(x.ref, 'u_color', rgba(color(this.theme, role)));
+            x.c.uniform(x.ref, 'u_p', p, { type: 'vec2' });
+            x.c.uniform(x.ref, 'u_g', g, { type: 'vec4' });
+        } else if (w.type === 'atext') {
             if (!force && now - x.lastPaint < (w.rate || (LIVE_TOKENS.test(w.text) ? LIVE_TEXT_MS : TEXT_MS))) return;
             const s = this._resolve(w.text);
             if (!force && s === x.last) return;

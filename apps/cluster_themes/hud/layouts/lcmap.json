@@ -507,7 +507,7 @@
     },
     {
       "id": "speed",
-      "type": "text",
+      "type": "gtext",
       "class": "overlay",
       "z": 5,
       "x": 427,
@@ -535,7 +535,7 @@
     },
     {
       "id": "gear",
-      "type": "text",
+      "type": "gtext",
       "class": "overlay",
       "z": 5,
       "x": 1274,

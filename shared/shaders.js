@@ -940,6 +940,32 @@ void main() {
 }
 `;
 
+const GTEXT = `// Proportional text for a cluster-render "effect" layer (GLSL ES 1.00), drawn by the GPU from a font's own R8 atlas
+// (hud/fonts, bound to u_font, u_atlas its size): up to 6 glyphs, each its atlas rect u_g[i] (x, y, w, h) at u_p[i]
+// (its top-left in layer px). A new value is one uniform message, no pixels, so a live readout never waits on
+// cluster-render's image upload (after ZEKAI's native digits). v_uv (0,0) is the top-left.
+precision highp float;
+varying vec2 v_uv;
+uniform sampler2D u_font;
+uniform vec2 u_atlas;
+uniform vec2 u_size;
+uniform vec4 u_g[6];
+uniform vec2 u_p[6];
+uniform vec4 u_color;
+
+void main() {
+    vec2 p = v_uv * u_size;
+    float ink = 0.0;
+    for (int i = 0; i < 6; i++) {
+        vec4 g = u_g[i];
+        vec2 q = p - u_p[i];
+        if (g.z > 0.0 && q.x >= 0.0 && q.y >= 0.0 && q.x < g.z && q.y < g.w)
+            ink = max(ink, texture2D(u_font, (g.xy + q) / u_atlas).r);
+    }
+    gl_FragColor = vec4(u_color.rgb, u_color.a * ink);
+}
+`;
+
 const METER = `// A segmented bar meter for a cluster-render "effect" layer (GLSL ES 1.00): u_segs segments along the layer's
 // width (or its height when u_vertical is 1, filling upward), the first u_value of the way lit. A lit segment takes
 // u_c1 below u_at.x of the bar, u_c2 up to u_at.y, u_c3 from there (the retro green / amber / red, or warm-up blue /
@@ -2195,4 +2221,4 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, mapfade: MAPFADE, lcbg: LCBG };
+module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, boxes: BOXES, atext: ATEXT, gtext: GTEXT, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, ribbon: RIBBON, deco: DECO, mview: MVIEW, vdash: VDASH, hexdash: HEXDASH, hexlc: HEXLC, turn: TURN, mapfade: MAPFADE, lcbg: LCBG };

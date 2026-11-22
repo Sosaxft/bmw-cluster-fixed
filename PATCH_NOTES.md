@@ -245,3 +245,12 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   hot), three short marks on the numbers' side; no more dashed segments with marks across.
 - Lettering: the D has a straight left side and a rounded right side (it read as a 0), the M is upright with a V, the 4
   is the squared 4.
+
+## Cluster Themes 0.26.1, HUD Widgets 0.18.1 — readouts that keep up with the car
+- "Still really delayed" (Nov 22 2026). Two causes, both fixed the way ZEKAI's themes (which never trailed) do it:
+  - The car notifies speed and revs only now and then; the apps waited for those notifications. Speed and revs are now
+    also read every 50 ms between them (skipped while a notification came in the last 120 ms; a read older than a
+    notification is dropped), acceleration every 100 ms; the temperatures stay at 2.5 s. Both apps (the shared kit).
+  - Live Cockpit Map's speed and gear were pictures re-drawn and uploaded on every change, queued behind cluster-render's
+    image upload budget. They are now drawn by the GPU from the font's atlas (new widget "gtext"): a new value is one
+    small uniform message, sent the moment it changes.

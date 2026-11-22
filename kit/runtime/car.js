@@ -153,6 +153,14 @@ class Car {
         // extra[iface].$pollMs: re-read that interface's fields that often (signals.js), for fields the car never notifies
         const pollMs = {};
         Object.keys(extra || {}).forEach((iface) => Object.keys(extra[iface]).forEach((f) => { if (f === '$pollMs') pollMs[iface] = extra[iface][f]; else add(iface, f, extra[iface][f]); }));
+        // the live readouts: the car notifies speed and revs only now and then, so between notifications they are
+        // read every 50 ms (skipped while a notification came in the last 120 ms; a read older than a notification
+        // is dropped). As ZEKAI's themes (100 ms), which never trailed the car; the temperatures stay at 2.5 s.
+        const LIVE = {
+            'de.bmw.infotainment.vehicle.Vehicle2': { pollMs: 50, readTimeoutMs: 200, notifyFreshMs: { statusCarSpeed2: 120 } },
+            'de.bmw.infotainment.vehicle.CDS': { pollMs: 50, readTimeoutMs: 200, notifyFreshMs: { statusEngineSpeed2: 120 }, pollByField: { statusEngineTemperature: 2500 } },
+            'de.bmw.infotainment.vehicle.CDS2': { pollMs: 100, readTimeoutMs: 200, notifyFreshMs: { statusLongitudinalAccelerationMassCenter: 150, statusLateralAccelerationMassCenter: 150 } },
+        };
         // a parked car sends nothing new for minutes (fields are notified on change), so "no data for
         // a while" doesn't mean "no car": once a signal's provider is there, stay on live data
         this.subs = [];
@@ -162,7 +170,7 @@ class Car {
         // no instance named "1", so watching it at "1" fails ACL generation and the install is refused.
         // Front screen = HMI_CID. Default everything else to "1".
         const INSTANCE = { 'de.bmw.infotainment.hmi.hmimediastate.HmiMediaState': 'HMI_CID' };
-        Object.keys(watches).forEach((iface) => ctx.signals.watch(iface, INSTANCE[iface] || '1', watches[iface], this.log, pollMs[iface] ? { pollMs: pollMs[iface] } : undefined)
+        Object.keys(watches).forEach((iface) => ctx.signals.watch(iface, INSTANCE[iface] || '1', watches[iface], this.log, LIVE[iface] && !pollMs[iface] ? LIVE[iface] : pollMs[iface] ? { pollMs: pollMs[iface] } : undefined)
             .then((s) => { this.subs.push(s); this.log.info('signal ' + iface.split('.').pop() + (s.error ? ' error: ' + s.error : ' subscribed')); }));
 
         // demo feed (20 Hz) - also keeps the sim warm so switching is seamless. On a busy or
