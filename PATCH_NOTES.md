@@ -254,3 +254,9 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   - Live Cockpit Map's speed and gear were pictures re-drawn and uploaded on every change, queued behind cluster-render's
     image upload budget. They are now drawn by the GPU from the font's atlas (new widget "gtext"): a new value is one
     small uniform message, sent the moment it changes.
+
+## Cluster Themes 0.26.2 — Live Cockpit Map's speed and gear show again
+- 0.26.1's GPU-drawn speed and gear (gtext) did not show on the car (video Nov 22 2026): the shader named its glyph
+  positions u_p, a name cluster-render keeps for its own projection matrix, so it did not link and drew nothing. Renamed
+  u_pos. The bench now refuses a shader declaring any of the renderer's names (u_mvp, u_mv, u_m, u_v, u_p, u_normal) as
+  anything but a mat4, as the car does, so this cannot pass the bench again.

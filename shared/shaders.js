@@ -941,7 +941,7 @@ void main() {
 `;
 
 const GTEXT = `// Proportional text for a cluster-render "effect" layer (GLSL ES 1.00), drawn by the GPU from a font's own R8 atlas
-// (hud/fonts, bound to u_font, u_atlas its size): up to 6 glyphs, each its atlas rect u_g[i] (x, y, w, h) at u_p[i]
+// (hud/fonts, bound to u_font, u_atlas its size): up to 6 glyphs, each its atlas rect u_g[i] (x, y, w, h) at u_pos[i]
 // (its top-left in layer px). A new value is one uniform message, no pixels, so a live readout never waits on
 // cluster-render's image upload (after ZEKAI's native digits). v_uv (0,0) is the top-left.
 precision highp float;
@@ -950,7 +950,7 @@ uniform sampler2D u_font;
 uniform vec2 u_atlas;
 uniform vec2 u_size;
 uniform vec4 u_g[6];
-uniform vec2 u_p[6];
+uniform vec2 u_pos[6];
 uniform vec4 u_color;
 
 void main() {
@@ -958,7 +958,7 @@ void main() {
     float ink = 0.0;
     for (int i = 0; i < 6; i++) {
         vec4 g = u_g[i];
-        vec2 q = p - u_p[i];
+        vec2 q = p - u_pos[i];
         if (g.z > 0.0 && q.x >= 0.0 && q.y >= 0.0 && q.x < g.z && q.y < g.w)
             ink = max(ink, texture2D(u_font, (g.xy + q) / u_atlas).r);
     }

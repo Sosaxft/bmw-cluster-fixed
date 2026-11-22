@@ -2224,7 +2224,7 @@ class HudApp {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_color', rgba(color(t, w.color || 'fg')));
             c.uniform(ref, 'u_g', new Array(24).fill(0), { type: 'vec4' });
-            c.uniform(ref, 'u_p', new Array(12).fill(0), { type: 'vec2' });
+            c.uniform(ref, 'u_pos', new Array(12).fill(0), { type: 'vec2' });
         } else if (w.type === 'atext') {
             const a = this._atlas(w.font, x.ci);
             x.atlas = a;
@@ -2728,7 +2728,7 @@ class HudApp {
                 pen += (q ? q.advance : 0) + sp;
             });
             if (roleChanged || force) x.c.uniform(x.ref, 'u_color', rgba(color(this.theme, role)));
-            x.c.uniform(x.ref, 'u_p', p, { type: 'vec2' });
+            x.c.uniform(x.ref, 'u_pos', p, { type: 'vec2' });
             x.c.uniform(x.ref, 'u_g', g, { type: 'vec4' });
         } else if (w.type === 'atext') {
             if (!force && now - x.lastPaint < (w.rate || (LIVE_TOKENS.test(w.text) ? LIVE_TEXT_MS : TEXT_MS))) return;

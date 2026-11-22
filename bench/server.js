@@ -248,6 +248,10 @@ const renderServer = net.createServer((sock) => {
                     nl.image = Buffer.alloc(m.iw * m.ih * 4);
                 } else if (m.kind === 'effect') {
                     if (!m.fs) return refuse('layer', m.ref, 'effect without fs');
+                    // the car's renderer fills u_mvp, u_mv, u_m, u_v, u_p and u_normal itself (mat4): a shader declaring one
+                    // as anything else does not link there and draws nothing (gtext's u_p, Nov 22 2026), so refuse it here too
+                    const reserved = /uniform\s+(?!mat4\b)\w+\s+(u_mvp|u_mv|u_m|u_v|u_p|u_normal)\b/.exec(m.fs);
+                    if (reserved) return refuse('layer', m.ref, 'uniform ' + reserved[1] + ' is reserved for the renderer (a mat4)');
                     nl.fs = m.fs; nl.time = !!m.time; nl.binds = {};
                     try {
                         const b = shaderBudget.layer(m.fs, nl.w, nl.h, m.target);
