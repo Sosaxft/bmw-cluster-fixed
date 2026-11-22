@@ -2732,12 +2732,28 @@ class HudApp {
         const S = this.rpmS || (this.rpmS = { v: raw, t: now, slope: 0, gap: 100, n: 0, rateT: now, rate: 0 });
         if (raw !== S.v) {
             const gap = Math.max(16, now - S.t);
-            S.slope = gap < 600 ? Math.max(-12, Math.min(12, (raw - S.v) / gap)) : 0;   // rpm a ms, at most 12000 rpm/s
-            S.gap = Math.min(250, gap); S.v = raw; S.t = now; S.n++;
+            const sl = gap < 600 ? Math.max(-12, Math.min(12, (raw - S.v) / gap)) : 0;   // rpm a ms, at most 12000 rpm/s
+            // carried on only at a rate two readings in a row agree on (the gentler of the two, same way): a single step
+            // (a shift, a blip) is not carried on past where it landed
+            S.slope = sl * (S.last || 0) > 0 ? (Math.abs(sl) < Math.abs(S.last) ? sl : S.last) : 0;
+            S.last = sl; S.gap = Math.min(250, gap); S.v = raw; S.t = now; S.n++;
         }
         if (now - S.rateT >= 2000) { S.rate = S.n * 1000 / (now - S.rateT); S.n = 0; S.rateT = now; }
-        // carried on only within one reading's gap: no new reading after that, the revs hold where the car said
-        if (!isNum(test) && raw > 0 && now - S.t <= S.gap) raw = Math.max(0, Math.min(9000, raw + S.slope * (now - S.t)));
+        // a shift: the revs go straight to where the new gear puts them (the speed times that gear's revs per km/h,
+        // learned while driving, a ZF 8-speed 330i's to start), held until the car's next reading, instead of waiting
+        // a reading or two for the drop or the blip ("when I downshift there's a delay", Nov 22 2026)
+        const d = this.car.data(), g = isNum(d.gear) && d.gear > 0 ? d.gear : null, sp = d.speed;
+        if (!S.k) S.k = { 1: 115, 2: 74, 3: 49.5, 4: 39.7, 5: 30.3, 6: 23.1, 7: 19, 8: 14.8 };
+        if (g !== S.gear) {
+            if (S.gear && g && isNum(sp) && sp > 8 && S.k[g] && !isNum(test)) S.jump = { rpm: sp * S.k[g], at: now, t: S.t };
+            S.gear = g; S.gearAt = now;
+        } else if (g && isNum(sp) && sp > 15 && raw > 1100 && now - S.gearAt > 1200 && Math.abs(S.slope) < 1.5) {
+            S.k[g] = S.k[g] ? S.k[g] + (raw / sp - S.k[g]) * 0.05 : raw / sp;
+        }
+        if (S.jump && (S.t !== S.jump.t || now - S.jump.at > 600)) S.jump = null;   // the car's own reading has come
+        // between readings the revs carry on, within one reading's gap; after that they hold where the car said
+        if (S.jump) raw = S.jump.rpm;
+        else if (!isNum(test) && raw > 0 && now - S.t <= S.gap && now - S.gearAt > 400) raw = Math.max(0, Math.min(9000, raw + S.slope * (now - S.t)));
         this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / RPM_TAU_MS)) : raw;
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
     }

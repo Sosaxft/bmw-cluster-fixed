@@ -276,3 +276,10 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
 - The number now moves the way BMW's does: the speed smoothed over 150 ms, the number changed at most 4 times a second
   and only once the speed is 0.6 past it, so it no longer flickers between two values. The speed needles use the same
   smoothed, calibrated speed. (HUD Widgets' own speed readouts too, at +3 %.)
+
+## Cluster Themes 0.26.5, HUD Widgets 0.18.4 — shifts show at once, no overshoot
+- "When I downshift there's a delay, and it's choppy" (Nov 22 2026). On a shift the revs now go straight to where the
+  new gear puts them (the speed times that gear's revs per km/h, learned while driving in each gear, a ZF 8-speed
+  330i's to start), held until the car's next reading arrives, instead of waiting a reading or two for the blip or drop.
+- The carry-forward between readings only uses a rate two readings in a row agree on (the gentler of the two), and none
+  for 400 ms after a shift, so a step (a shift, a blip) no longer overshoots and swings back.
