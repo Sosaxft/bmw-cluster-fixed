@@ -1719,6 +1719,7 @@ class HudApp {
             return this.car.data().demo ? 31 : null;
         }
         if (name === 'rpm' && isNum(this.rpmF)) return this.rpmF;
+        if (name === 'speed' && isNum(this.spF)) return this.spF;     // the speedometer's (_smoothSpeed): what the needles show
         if (name === 'hvSoc') return isNum(this.hvSoc) && Date.now() - this.hvSocAt < HV_STALE_MS ? this.hvSoc : this.car.data().demo ? 64 : null;
         if (name === 'fuel' || name === 'range' || name === 'ambient') {
             // the kit's demo drive has none of these: made-up but steady values while it runs
@@ -1798,7 +1799,10 @@ class HudApp {
             case 'runLabel': return us ? '0-60 MPH' : '0-100 KM/H';
             case 'warm': { const o = this._raw('oil'); return isNum(o) ? (o < 80 ? 'WARMING UP' : 'ENGINE WARM') : ''; }
             case 'badge': return badges.text(this.setting('badge'), this.setting('badgeBMW') === true);
-            case 'speed': { const v = this._raw('speed'); return fix(isNum(v) ? (us ? v * 0.621371 : v) : v, 0); }
+            case 'speed': {
+                if (isNum(this.spShown) && this.spShownUs === us) return String(this.spShown);   // the steady number (_smoothSpeed)
+                const v = this._raw('speed'); return fix(isNum(v) ? (us ? v * 0.621371 : v) : v, 0);
+            }
             case 'u:speed': return us ? 'MPH' : 'KM/H';
             case 'mediaTitle': return this._mediaOn() ? this.media.title : '';
             case 'mediaArtist': return this._mediaOn() ? this.media.artist : '';
@@ -2664,6 +2668,7 @@ class HudApp {
     _tick() {
         const now = Date.now();
         this._smoothRpm(now);
+        this._smoothSpeed(now);
         this._cueTick(now);
         if (now - (this.bumpAt || 0) >= 1000) { this.bumpAt = now; smartTemps.bumpTick(this); }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
@@ -2695,6 +2700,23 @@ class HudApp {
     _avgSpeed() {
         if (this.car.data().demo) return 54;
         return this.tripMs >= 60000 ? this.tripKm / (this.tripMs / 3600000) : null;
+    }
+
+    /** BMW-like speedometer (Nov 22 2026: "speed not matching the HUD", "flickers too fast"). The car's speed signal
+     *  reads the true speed, a little under BMW's own speedometer, which over-reads on purpose: "speedCal" (+3 % by
+     *  default) brings it up to what BMW's HUD shows. Smoothed (150 ms), and the number moves the way BMW's does: at
+     *  most 4 times a second, and only once the speed is 0.6 past the shown number, so it never flickers between two. */
+    _smoothSpeed(now) {
+        const raw = this.car.data().speed;
+        const dt = this.lastSpT ? Math.min(500, now - this.lastSpT) : 0;
+        this.lastSpT = now;
+        if (!isNum(raw)) { this.spF = null; this.spShown = null; return; }
+        const cal = this.setting('speedCal'), k = 1 + (isNum(cal) ? cal : 3) / 100;
+        const v = Math.max(0, raw * (raw > 0.5 ? k : 1));
+        this.spF = isNum(this.spF) ? this.spF + (v - this.spF) * (1 - Math.exp(-dt / 150)) : v;
+        const us = this.setting('units') === 'us', u = us ? this.spF * 0.621371 : this.spF;
+        if (!isNum(this.spShown) || this.spShownUs !== us) { this.spShown = Math.round(u); this.spShownUs = us; this.spShownAt = now; return; }
+        if (now - this.spShownAt >= 250 && Math.abs(u - this.spShown) >= 0.6) { this.spShown = u < 0.5 ? 0 : Math.round(u); this.spShownAt = now; }
     }
 
     /** BMW-like tach: a RPM_TAU_MS (35 ms) filter, and a readout that moves in 50 rpm steps, only by 40 rpm or more.

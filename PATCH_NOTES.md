@@ -268,3 +268,11 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   reading's gap and 250 ms, then hold where the car said; the 35 ms smoothing stays. The needle and the readouts move
   with the engine instead of a step behind it.
 - "Black-box check" (Settings) also shows how many revs readings a second the car sends.
+
+## Cluster Themes 0.26.4, HUD Widgets 0.18.3 — the speed reads like BMW's and holds still
+- "Speed not matching the heads-up display; it flickers too fast" (Nov 22 2026). The HUD's speed is BMW's own, which
+  over-reads on purpose; the car's speed signal is the true speed. New setting "Speed reads like BMW's speedometer
+  (+%)", +3 % by default (0 = the true speed, up to +8 % in half steps) to line it up with the HUD.
+- The number now moves the way BMW's does: the speed smoothed over 150 ms, the number changed at most 4 times a second
+  and only once the speed is 0.6 past it, so it no longer flickers between two values. The speed needles use the same
+  smoothed, calibrated speed. (HUD Widgets' own speed readouts too, at +3 %.)
