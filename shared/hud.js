@@ -2358,6 +2358,7 @@ class HudApp {
             c.uniform(ref, 'u_segSlant', [isNum(w.segSlant) ? w.segSlant : 9]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
+            c.uniform(ref, 'u_holeF', [w.holeFeather || 0]);   // a soft edge this many px into the window (0: hard)
             x.gauges = [['u_gaugeL', L], ['u_gaugeR', R]];
             x.bars = bars;
         } else if (w.type === 'mtach') {

@@ -289,3 +289,8 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   reading in 35 ms and wait for the next: stair steps. It now glides over about 0.7 of the gap between the car's
   readings (35..110 ms), and the carry-on runs that much further ahead so a steady climb or fall costs no lag.
   Simulated on readings every 100-200 ms with jitter: about half the frame-to-frame jerk of 0.26.5 at the same error.
+
+## Cluster Themes 0.26.7 — M's map window
+- M with the map in the theme (car photo Nov 22 2026): the window showed BMW's own map-screen speed readout cut off at
+  its left edge, and BMW's map frame at its corners, in a hard rectangle. It now starts at x 716, past that readout,
+  and fades in from the dash over 70 px with 60 px corners (new mdash "holeFeather").

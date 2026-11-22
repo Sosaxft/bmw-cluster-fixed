@@ -468,6 +468,7 @@ uniform vec4 u_segMax;    // segments per bar
 uniform float u_segSlant; // px each segment leans
 uniform vec4 u_hole;      // the map window x, y, w, h px, already inset (w 0 = none): cut see-through over the map
 uniform float u_holeR;    // its corner radius px
+uniform float u_holeF;    // a soft edge, px into the window: the map fades in from the dash (0: hard)
 
 const float PI = 3.14159265;
 
@@ -639,7 +640,7 @@ void main() {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
-        c.a *= clamp(hd + 0.5, 0.0, 1.0);
+        c.a *= 1.0 - smoothstep(0.0, u_holeF + 1.0, -hd - 0.5);
     }
 
     // tricolour mark: three slanted bars
