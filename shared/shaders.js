@@ -2127,8 +2127,8 @@ uniform vec4 u_fade;
 uniform vec4 u_rails;    // the top rail's y, the bottom rail's y, their half length from the middle, brightness
 void main() {
     vec2 p = v_uv * u_size;
-    vec2 cc = (p - vec2(u_size.x * 0.5, u_size.y * 0.55)) / u_size;
-    vec3 c = mix(vec3(0.05, 0.062, 0.085), vec3(0.028, 0.034, 0.048), clamp(length(cc * vec2(1.0, 2.2)) * 1.6, 0.0, 1.0));
+    // one even slate tone over the whole screen, the hexagon's own (hexlc), a touch lighter at the top: no black corners
+    vec3 c = mix(vec3(0.095, 0.11, 0.145), vec3(0.07, 0.082, 0.11), clamp(p.y / u_size.y, 0.0, 1.0));
     float gl = exp(-length((p - vec2(220.0, 360.0)) / vec2(620.0, 300.0)));
     float gr = exp(-length((p - vec2(1700.0, 360.0)) / vec2(620.0, 300.0)));
     c += vec3(0.02, 0.09, 0.24) * gl * 0.55 + vec3(0.24, 0.03, 0.05) * gr * 0.55;
@@ -2142,8 +2142,6 @@ void main() {
     float r1 = exp(-abs(p.y - u_rails.x) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.x) / 9.0);
     float r2 = exp(-abs(p.y - u_rails.y) / 1.6) + 0.35 * exp(-abs(p.y - u_rails.y) / 9.0);
     c = mix(c, rc, clamp((r1 + r2) * along * u_rails.w, 0.0, 1.0));
-    // the screen's very edges darker
-    c *= 1.0 - 0.45 * smoothstep(0.38, 0.5, abs(v_uv.x - 0.5));
     float m = 0.0;
     if (u_hole.z > 0.0) {
         float l = p.x - u_hole.x, t = p.y - u_hole.y, r = u_hole.x + u_hole.z - p.x, b = u_hole.y + u_hole.w - p.y;

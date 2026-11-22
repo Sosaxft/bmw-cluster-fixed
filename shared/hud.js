@@ -1349,33 +1349,26 @@ class HudApp {
         if (this.setting('clusterDiag') !== true) {
             if (this._diagT) { clearInterval(this._diagT); this._diagT = null; }
             this._diagRun = null;
-            if (this._diagOff || this._diagSolid) { this._diagOff = false; this._diagSolid = false; this._rebuild(); }
+            if (this._diagOff || this._diagVariant) { this._diagOff = false; this._diagVariant = null; this._rebuild(); }
             return [];
         }
         if (!this._diagT) {
-            // a check by itself, once per switch-on: cluster-render's slot report with the theme up, then with the theme
-            // taken off for a few seconds (BMW's own screen), then the theme back: what BMW shows differently while a
-            // theme is up is what draws the black boxes (BimmerCode's M display, Nov 21 2026)
-            const run = this._diagRun = { phase: 'with the theme up', on: null, off: null };
+            // a check by itself, once per switch-on, about 30 s, the driver watching the cluster in D (where BimmerCode's
+            // M display shows the boxes): 1 the theme; 2 the theme with BMW's strip gap (its gear letter) covered too;
+            // 3 one plain full-screen image layer and nothing else (how ZEKAI's themes draw, which show no boxes);
+            // 4 BMW's own screen. Which steps show the boxes tells what of ours makes BMW draw them. cluster-render's
+            // slot report is read in step 1 and step 4; lines that differ are starred.
+            const run = this._diagRun = { phase: 'step 1 of 4: the theme as it is', on: null, off: null };
             const ask = () => { if (this.client.ready) this.client.status(); };
             const slots = () => String(this.crStatus || '').split('\n').map((l) => l.trim()).filter((l) => /slot|0x[0-9a-f]{3}\b/i.test(l) && !/^layer \d/.test(l));
-            const step = (ms, fn) => setTimeout(() => this._guard('diag', () => { if (this._diagRun === run) fn(); }), ms);
+            const step = (ms, fn) => setTimeout(() => this._guard('diag', () => { if (this._diagRun === run) { fn(); this._status(); } }), ms);
+            const set = (variant, off, phase) => { this._diagVariant = variant; this._diagOff = off; run.phase = phase; this._rebuild(); };
             ask();
-            step(3000, () => {
-                run.on = slots();
-                run.phase = 'theme taken off for a moment';
-                this._diagOff = true; this._rebuild();
-                step(5000, ask);
-                step(8000, () => {
-                    run.off = slots();
-                    run.phase = 'solid blue test: look at the cluster now. Black boxes on the blue = BMW draws them on top';
-                    this._diagOff = false; this._diagSolid = true; this._rebuild(); this._status();
-                });
-                step(16000, () => {
-                    run.phase = 'done (switch off and on to check again)';
-                    this._diagSolid = false; this._rebuild(); this._status();
-                });
-            });
+            step(5000, () => { run.on = slots(); set('strip', false, 'step 2 of 4: the strip gap by the gear letter filled in'); });
+            step(12000, () => set('plain', false, 'step 3 of 4: one plain screen, nothing else of ours'));
+            step(19000, () => set(null, true, "step 4 of 4: BMW's own screen"));
+            step(24000, ask);
+            step(26000, () => { run.off = slots(); set(null, false, 'done: tell Claude which steps showed the boxes (switch off and on to run again)'); });
             this._diagT = setInterval(() => this._guard('diag', () => { ask(); this._status(); }), 3000);
         }
         const run = this._diagRun || {};
@@ -2007,9 +2000,10 @@ class HudApp {
             .map((w) => (w.stripRow ? Object.assign({}, w) : w));
         if (this.target === 'hud' && this.setting('showTurn') !== false && !/calibration/i.test(layout.name || '')
             && !shown.some((w) => ['grid', 'gridlabels', 'swatch', 'swatchimg'].indexOf(w.type) >= 0)) shown.push(Object.assign({}, TURN_WIDGET));
-        // the black-box check's solid phase: one opaque blue sheet over all of ours, no holes. A black box still seen then
-        // is BMW's, drawn above the panel; gone, it was BMW's cluster showing through a see-through part of ours
-        if (this._diagSolid && this.target === 'panel') shown.push({ id: 'diag_solid', type: 'fill', class: 'alert', z: 999, x: 0, y: 0, w: 1920, h: 720, color: [24, 70, 170, 255] });
+        // the black-box check's steps (clusterDiagLines): 'strip' fills BMW's strip gap by its gear letter as well;
+        // 'plain' leaves one opaque full-screen image layer and nothing else, the way ZEKAI's themes draw
+        if (this.target === 'panel' && this._diagVariant === 'strip') shown.push({ id: 'diag_strip', type: 'fill', class: 'content', z: 1, x: 1370, y: 660, w: 100, h: 60, color: [18, 21, 28, 255] });
+        if (this.target === 'panel' && this._diagVariant === 'plain') shown.splice(0, shown.length, { id: 'diag_plain', type: 'card', own: true, class: 'overlay', z: 0, x: 0, y: 0, w: 1920, h: 720, fill: [24, 28, 37, 255], line: [24, 28, 37, 255], border: 0, radius: 1 });
         this.shown = shown;              // for a scale to find its rev bar (driver camera wings)
         this._setNeeds(shown);
         // plan the layers first (a sheet's size is only known once every member is placed), then make them

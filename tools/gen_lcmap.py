@@ -104,8 +104,8 @@ widgets += [
     text('o_now', 1290, 528, 76, 29, '{{oil}}°', 'u_small', 'fg', 'right'),
     text('o_cold', 1357, 563, 60, 29, '{{temp:50}}', 'u_small', 'fg'),
     # the bottom strip, as the Sport theme (BMW's gear letter shows in the gap x 1380..1460)
-    {'id': 'strip_cover_l', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 0, 'y': 660, 'w': 1380, 'h': 60, 'color': 'bg', 'stripRow': 'l'},
-    {'id': 'strip_cover_r', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 1460, 'y': 660, 'w': 460, 'h': 60, 'color': 'bg', 'stripRow': 'r'},
+    {'id': 'strip_cover_l', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 0, 'y': 660, 'w': 1380, 'h': 60, 'color': 'strip', 'stripRow': 'l'},
+    {'id': 'strip_cover_r', 'type': 'fill', 'class': 'content', 'z': 0, 'x': 1460, 'y': 660, 'w': 460, 'h': 60, 'color': 'strip', 'stripRow': 'r'},
     text('strip_time', 120, 678, 124, 26, '{{time}}', 'u_val', 'fg', 'right', stripRow='l'),
     text('strip_ampm', 250, 680, 35, 25, '{{ampmLc}}', 'u_cap', 'dim', 'left', stripRow='l'),
     # (the range sits by the fuel gauge)

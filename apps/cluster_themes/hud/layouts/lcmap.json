@@ -707,7 +707,7 @@
       "y": 660,
       "w": 1380,
       "h": 60,
-      "color": "bg",
+      "color": "strip",
       "stripRow": "l"
     },
     {
@@ -719,7 +719,7 @@
       "y": 660,
       "w": 460,
       "h": 60,
-      "color": "bg",
+      "color": "strip",
       "stripRow": "r"
     },
     {

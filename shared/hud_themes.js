@@ -76,6 +76,7 @@ const THEMES = {
         modeSport: [255, 70, 80, 255], modeComfort: [120, 185, 255, 255], modeEco: [80, 220, 150, 255],
         card: [22, 27, 37, 255], cardLine: [92, 150, 230, 140],
         mapTop: [24, 29, 39, 255], mapBot: [17, 21, 29, 255],
+        strip: [18, 21, 28, 255],     // the bottom strip, the backdrop's own tone at its foot (lcbg), so it reads as one screen
     },
     // Hex Map (layout hexmap.json, tools/gen_hexmap.py): black, a white hexagon frame glowing red to orange, the map inside.
     hexdash: {

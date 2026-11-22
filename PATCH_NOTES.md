@@ -221,3 +221,13 @@ A copy of BMW's own iDrive 7 Live Cockpit screen with the map up. Pick **Live Co
   in Settings, so BMW's slots shown only while a theme is up stand out; (3) 8 s of one opaque blue sheet over all of
   the theme, no see-through parts. Black boxes still on the blue are BMW's, drawn above the panel; gone, BMW's
   cluster was showing through a see-through part of the theme. Then the theme comes back.
+
+## Cluster Themes 0.25.4 — Live Cockpit Map blends edge to edge; a four-step black-box check
+- Live Cockpit Map's backdrop is one even slate tone over the whole screen (the hexagon's own inside colour), with no
+  darkened edges or corners, and BMW's bottom strip is covered in the same tone, so nothing reads as black around the dash.
+- Car photos Nov 22 2026: the boxes show in D and go in M (manual), flickering on every shift. Every layer of Live
+  Cockpit Map was listed (bench): both backdrops are opaque there and nothing of ours has an edge there, so BMW draws
+  them on top of the panel. "Black-box check" now runs four steps, about 7 s each, to watch in D: 1 the theme;
+  2 the theme with BMW's strip gap by the gear letter filled in; 3 one plain full-screen image layer and nothing else,
+  the way ZEKAI's themes draw (which show no boxes); 4 BMW's own screen. Which steps show the boxes says what of ours
+  sets BMW off.
